@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maraki Tech — Technology That Moves Business Forward</title>
+  <meta name="description" content="Maraki Tech builds modern software, payment solutions, business platforms and digital products." />
+  <meta name="theme-color" content="#050806" />
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("maraki-theme");
+        var theme = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+        document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    })();
+  </script>
+  <meta property="og:title" content="Maraki Tech" />
+  <meta property="og:description" content="Technology that moves business forward." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/enhancements.css" />
+</head>
+<body>
+  <a class="skip" href="#top">Skip to content</a>
+
+  <div class="page-loader" id="pageLoader" role="status" aria-live="polite">
+    <div class="loader-inner">
+      <div class="logo-mark" aria-hidden="true">
+        <div class="ring"></div>
+        <div class="dot"></div>
+      </div>
+      <div class="loader-word">MARAKI</div>
+    </div>
+  </div>
+
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <div class="background" aria-hidden="true">
+    <div class="grid"></div>
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+    <div class="orb three"></div>
+  </div>
+
+  <nav id="navbar">
+    <div class="nav-inner">
+      <a href="#top" class="logo" id="brandLockup">MARAKI</a>
+      <div class="nav-links" id="navLinks"></div>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme">☀</button>
+        <button class="menu" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false">☰</button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <div id="page"></div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <button class="back-to-top" id="backToTop" type="button" aria-label="Back to top">↑</button>
+
+  <noscript>
+    <p style="padding: 120px 24px; text-align: center;">Enable JavaScript to view the Maraki Tech site.</p>
+  </noscript>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

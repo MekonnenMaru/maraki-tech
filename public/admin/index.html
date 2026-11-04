@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Maraki Tech</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin/css/admin.css" />
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("maraki-theme");
+        var theme = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+        document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="boot" id="boot">Loading admin…</div>
+
+  <div class="login-screen hidden" id="loginView">
+    <form class="login-card" id="loginForm">
+      <div class="logo-mark" aria-hidden="true"><span class="ring"></span><span class="dot"></span></div>
+      <h1>Maraki Admin</h1>
+      <p>Sign in to edit the landing page, read messages, and publish changes.</p>
+      <label class="field">
+        <span>Username</span>
+        <input name="username" autocomplete="username" required />
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input name="password" type="password" autocomplete="current-password" required />
+      </label>
+      <p class="login-error" id="loginError" role="alert"></p>
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+  </div>
+
+  <div class="admin-shell hidden" id="appView">
+    <aside class="sidebar" id="sidebar">
+      <a class="side-brand" href="/admin">
+        <span class="logo-mark" aria-hidden="true"><span class="ring"></span><span class="dot"></span></span>
+        <span>MARAKI <small>Admin</small></span>
+      </a>
+      <nav class="side-nav">
+        <div class="nav-group" data-group="overview">
+          <button type="button" class="nav-group-toggle" aria-expanded="true" aria-controls="group-overview">
+            <span>Overview</span>
+            <span class="group-meta">
+              <span class="count-pill" id="groupMsgBadge" hidden>0</span>
+              <span class="chevron" aria-hidden="true">▾</span>
+            </span>
+          </button>
+          <div class="nav-group-items" id="group-overview">
+            <button type="button" data-page="dashboard">Overview</button>
+            <button type="button" data-page="messages">Messages <span class="count-pill" id="msgBadge" hidden>0</span></button>
+          </div>
+        </div>
+
+        <div class="nav-group collapsed" data-group="page">
+          <button type="button" class="nav-group-toggle" aria-expanded="false" aria-controls="group-page">
+            <span>Page</span>
+            <span class="chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-group-items" id="group-page">
+            <button type="button" data-page="content">Site content</button>
+            <button type="button" data-page="stats">Stats</button>
+          </div>
+        </div>
+
+        <div class="nav-group collapsed" data-group="offerings">
+          <button type="button" class="nav-group-toggle" aria-expanded="false" aria-controls="group-offerings">
+            <span>Offerings</span>
+            <span class="chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-group-items" id="group-offerings">
+            <button type="button" data-page="services">Services</button>
+            <button type="button" data-page="products">Products</button>
+            <button type="button" data-page="pricing">Pricing</button>
+          </div>
+        </div>
+
+        <div class="nav-group collapsed" data-group="apps">
+          <button type="button" class="nav-group-toggle" aria-expanded="false" aria-controls="group-apps">
+            <span>Apps</span>
+            <span class="chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-group-items" id="group-apps">
+            <button type="button" data-page="apps">Entertainment</button>
+          </div>
+        </div>
+
+        <div class="nav-group collapsed" data-group="company">
+          <button type="button" class="nav-group-toggle" aria-expanded="false" aria-controls="group-company">
+            <span>Company</span>
+            <span class="chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-group-items" id="group-company">
+            <button type="button" data-page="process">Process</button>
+            <button type="button" data-page="team">Team</button>
+            <button type="button" data-page="testimonials">Testimonials</button>
+          </div>
+        </div>
+
+        <div class="nav-group collapsed" data-group="details">
+          <button type="button" class="nav-group-toggle" aria-expanded="false" aria-controls="group-details">
+            <span>Details</span>
+            <span class="chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-group-items" id="group-details">
+            <button type="button" data-page="technologies">Technology</button>
+            <button type="button" data-page="faqs">FAQ</button>
+          </div>
+        </div>
+
+        <div class="nav-group collapsed" data-group="account">
+          <button type="button" class="nav-group-toggle" aria-expanded="false" aria-controls="group-account">
+            <span>Account</span>
+            <span class="chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-group-items" id="group-account">
+            <button type="button" data-page="account">Password</button>
+          </div>
+        </div>
+      </nav>
+      <div class="side-foot">
+        <span id="who"></span>
+        <button type="button" id="logoutBtn">Log out</button>
+      </div>
+    </aside>
+
+    <div class="backdrop" id="backdrop"></div>
+
+    <div class="workspace">
+      <header class="topbar">
+        <button class="icon-btn menu-toggle" id="navToggle" type="button" aria-label="Open navigation">☰</button>
+        <h1 id="viewTitle">Overview</h1>
+        <button class="icon-btn theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme">☀</button>
+        <a class="btn ghost" href="/" target="_blank" rel="noopener">View site</a>
+      </header>
+      <div class="banner hidden" id="securityBanner">
+        <span>You're still using the default password.</span>
+        <button type="button" data-page="account">Change it</button>
+      </div>
+      <div class="view" id="view"></div>
+    </div>
+  </div>
+
+  <div id="modalRoot"></div>
+  <div id="toastRoot" aria-live="polite"></div>
+  <script src="/admin/js/admin.js"></script>
+</body>
+</html>
