@@ -317,6 +317,15 @@ async function init() {
   return pool;
 }
 
+function getPool() {
+  if (!pool) {
+    const error = new Error("Database is not ready.");
+    error.status = 500;
+    throw error;
+  }
+  return pool;
+}
+
 function assertTable(table) {
   if (!TABLES.has(table)) {
     const error = new Error("Not found.");
@@ -612,6 +621,7 @@ async function passwordChangeRequired() {
 
 module.exports = {
   init,
+  getPool,
   getSettings,
   saveSettings,
   listRows,

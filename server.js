@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const session = require("express-session");
+const MySQLStore = require("express-mysql-session")(session);
 
 const envPath = path.join(__dirname, ".env");
 if (!fs.existsSync(envPath)) {
@@ -12,6 +13,7 @@ if (!fs.existsSync(envPath)) {
     [
       "PORT=3000",
       `SESSION_SECRET=${secret}`,
+      "SESSION_HOURS=12",
       "DB_HOST=localhost",
       "DB_PORT=3306",
       "DB_USER=root",
@@ -56,6 +58,26 @@ async function start() {
   const port = Number(process.env.PORT) || 3000;
   const publicDir = path.join(__dirname, "public");
 
+  const sessionHours = Math.max(1, Number(process.env.SESSION_HOURS) || 12);
+  const sessionMaxAge = sessionHours * 60 * 60 * 1000;
+  const sessionStore = new MySQLStore(
+    {
+      clearExpired: true,
+      checkExpirationInterval: 15 * 60 * 1000,
+      expiration: sessionMaxAge,
+      createDatabaseTable: true,
+      schema: {
+        tableName: "sessions",
+        columnNames: {
+          session_id: "session_id",
+          expires: "expires",
+          data: "data",
+        },
+      },
+    },
+    db.getPool()
+  );
+
   app.disable("x-powered-by");
   app.use((req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -68,6 +90,7 @@ async function start() {
     session({
       name: "maraki.sid",
       secret: process.env.SESSION_SECRET,
+      store: sessionStore,
       resave: false,
       saveUninitialized: false,
       rolling: true,
@@ -75,7 +98,7 @@ async function start() {
         httpOnly: true,
         sameSite: "lax",
         secure: false,
-        maxAge: 1000 * 60 * 60 * 12,
+        maxAge: sessionMaxAge,
       },
     })
   );
