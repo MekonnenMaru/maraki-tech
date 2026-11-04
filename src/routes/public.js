@@ -55,35 +55,44 @@ router.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
-router.get("/content", (req, res) => {
-  const cookies = req.headers.cookie || "";
-  const seen = cookies.split(";").some((part) => part.trim().startsWith("mt_seen="));
-  if (!seen) {
-    db.recordVisit();
-    res.append("Set-Cookie", "mt_seen=1; Max-Age=1800; Path=/; HttpOnly; SameSite=Lax");
-  }
+router.get("/content", async (req, res, next) => {
+  try {
+    const cookies = req.headers.cookie || "";
+    const seen = cookies.split(";").some((part) => part.trim().startsWith("mt_seen="));
+    if (!seen) {
+      await db.recordVisit();
+      res.append("Set-Cookie", "mt_seen=1; Max-Age=1800; Path=/; HttpOnly; SameSite=Lax");
+    }
 
-  const payload = { settings: db.getSettings() };
-  for (const [name, spec] of Object.entries(COLLECTIONS)) {
-    payload[name] = db.listRows(spec.table, { visibleOnly: true }).map((row) => present(name, row));
+    const payload = { settings: await db.getSettings() };
+    for (const [name, spec] of Object.entries(COLLECTIONS)) {
+      const rows = await db.listRows(spec.table, { visibleOnly: true });
+      payload[name] = rows.map((row) => present(name, row));
+    }
+    res.json(payload);
+  } catch (error) {
+    next(error);
   }
-  res.json(payload);
 });
 
-router.post("/contact", (req, res) => {
-  const ip = clientIp(req);
-  if (limited("contact", ip, 5, HOUR)) {
-    return res.status(429).json({ error: "Too many messages. Please try again in an hour." });
-  }
-  strike("contact", ip, HOUR);
+router.post("/contact", async (req, res, next) => {
+  try {
+    const ip = clientIp(req);
+    if (limited("contact", ip, 5, HOUR)) {
+      return res.status(429).json({ error: "Too many messages. Please try again in an hour." });
+    }
+    strike("contact", ip, HOUR);
 
-  if (req.body && String(req.body.company_website || "").trim()) {
-    return res.json({ ok: true });
-  }
+    if (req.body && String(req.body.company_website || "").trim()) {
+      return res.json({ ok: true });
+    }
 
-  const message = cleanMessage(req.body || {});
-  db.addMessage(message);
-  res.status(201).json({ ok: true });
+    const message = cleanMessage(req.body || {});
+    await db.addMessage(message);
+    res.status(201).json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;

@@ -1,7 +1,5 @@
-const fs = require("fs");
-const path = require("path");
 const bcrypt = require("bcryptjs");
-const Database = require("better-sqlite3");
+const mysql = require("mysql2/promise");
 const { DEFAULT_SETTINGS } = require("./settings");
 const { seed } = require("./seed");
 
@@ -18,168 +16,6 @@ const TABLES = new Set([
   "pricing_plans",
 ]);
 
-const dataDir = path.join(__dirname, "..", "data");
-fs.mkdirSync(dataDir, { recursive: true });
-
-const db = new Database(path.join(dataDir, "maraki.db"));
-db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
-
-const hadApps = !!db.prepare(
-  "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'apps'"
-).get();
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL DEFAULT ''
-  );
-
-  CREATE TABLE IF NOT EXISTS admins (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    must_change INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS stats (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    value INTEGER NOT NULL,
-    suffix TEXT NOT NULL DEFAULT '',
-    label TEXT NOT NULL,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    visible INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS services (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    icon TEXT NOT NULL DEFAULT '',
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    visible INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS products (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    link TEXT NOT NULL DEFAULT '',
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    visible INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS apps (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    tagline TEXT NOT NULL DEFAULT '',
-    description TEXT NOT NULL DEFAULT '',
-    photos TEXT NOT NULL DEFAULT '[]',
-    video TEXT NOT NULL DEFAULT '',
-    link TEXT NOT NULL DEFAULT '',
-    family TEXT NOT NULL DEFAULT 'bingo',
-    channel TEXT NOT NULL DEFAULT 'both',
-    edition TEXT NOT NULL DEFAULT '',
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    visible INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS process_steps (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    visible INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS team_members (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    role TEXT NOT NULL,
-    bio TEXT NOT NULL,
-    skills TEXT NOT NULL DEFAULT '[]',
-    avatar_letter TEXT NOT NULL DEFAULT '',
-    avatar_image TEXT NOT NULL DEFAULT '',
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    visible INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS testimonials (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    quote TEXT NOT NULL,
-    name TEXT NOT NULL,
-    company TEXT NOT NULL DEFAULT '',
-    avatar_letter TEXT NOT NULL DEFAULT '',
-    avatar_image TEXT NOT NULL DEFAULT '',
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    visible INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS technologies (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    visible INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS faqs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    question TEXT NOT NULL,
-    answer TEXT NOT NULL,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    visible INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS pricing_plans (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    amount TEXT NOT NULL,
-    period TEXT NOT NULL DEFAULT '',
-    description TEXT NOT NULL DEFAULT '',
-    features TEXT NOT NULL DEFAULT '[]',
-    featured INTEGER NOT NULL DEFAULT 0,
-    badge TEXT NOT NULL DEFAULT '',
-    button_text TEXT NOT NULL DEFAULT 'Get Started',
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    visible INTEGER NOT NULL DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    company TEXT NOT NULL DEFAULT '',
-    service TEXT NOT NULL DEFAULT '',
-    message TEXT NOT NULL,
-    is_read INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS visits (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    day TEXT NOT NULL,
-    created_at TEXT NOT NULL
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_messages_created ON messages (id);
-  CREATE INDEX IF NOT EXISTS idx_visits_day ON visits (day);
-`);
-
-seed(db);
-
-const appColumns = new Set(db.prepare("PRAGMA table_info(apps)").all().map((column) => column.name));
-const addedAppCatalog = !appColumns.has("family");
-if (!appColumns.has("family")) {
-  db.exec("ALTER TABLE apps ADD COLUMN family TEXT NOT NULL DEFAULT 'bingo'");
-}
-if (!appColumns.has("channel")) {
-  db.exec("ALTER TABLE apps ADD COLUMN channel TEXT NOT NULL DEFAULT 'both'");
-}
-if (!appColumns.has("edition")) {
-  db.exec("ALTER TABLE apps ADD COLUMN edition TEXT NOT NULL DEFAULT ''");
-}
-
 const APP_CATALOG = [
   ["Ethiomark Bingo", "Hall layout", "Online and offline Bingo with the Ethiomark layout.", "bingo", "both", "", 0],
   ["Anbesa Bingo", "Hall layout", "Online and offline Bingo with the Anbesa layout.", "bingo", "both", "", 1],
@@ -189,62 +25,296 @@ const APP_CATALOG = [
   ["Spin", "Online & Offline", "Spin for online play and offline venues.", "spin", "both", "", 5],
 ];
 
-const insertApp = db.prepare(
-  `INSERT INTO apps (name, tagline, description, photos, video, link, family, channel, edition, sort_order, visible)
-   VALUES (?, ?, ?, '[]', '', '', ?, ?, ?, ?, 1)`
-);
+let pool;
 
-if (!hadApps) {
-  APP_CATALOG.forEach((row) => insertApp.run(...row));
+function requiredEnv(name) {
+  const value = String(process.env[name] || "").trim();
+  if (!value && name !== "DB_PASSWORD") {
+    const error = new Error(`Set ${name} in the .env file.`);
+    error.status = 500;
+    throw error;
+  }
+  return value;
 }
 
-if (addedAppCatalog) {
-  const updateApp = db.prepare(
-    `UPDATE apps
-     SET name = ?, tagline = ?, description = ?, family = ?, channel = ?, edition = ?, sort_order = ?
-     WHERE id = ?`
-  );
-  for (const row of db.prepare("SELECT id, name, description FROM apps").all()) {
-    const key = String(row.name || "").trim().toLowerCase();
-    if (key === "bingo") {
-      updateApp.run(...APP_CATALOG[0].slice(0, 7), row.id);
-    } else if (key === "ethiomark bingo") {
-      updateApp.run(...APP_CATALOG[0].slice(0, 7), row.id);
-    } else if (key === "anbesa bingo") {
-      updateApp.run(...APP_CATALOG[1].slice(0, 7), row.id);
-    } else if (key === "keno") {
-      updateApp.run(...APP_CATALOG[4].slice(0, 7), row.id);
-    } else if (key === "spin") {
-      updateApp.run(...APP_CATALOG[5].slice(0, 7), row.id);
-    } else {
-      const family = /keno/i.test(row.name) ? "keno" : /spin/i.test(row.name) ? "spin" : "bingo";
-      const channel = /telegram/i.test(row.name) ? "telegram" : "both";
-      db.prepare("UPDATE apps SET family = ?, channel = ? WHERE id = ?").run(family, channel, row.id);
-    }
+function createPool() {
+  return mysql.createPool({
+    host: requiredEnv("DB_HOST"),
+    port: Number(process.env.DB_PORT) || 3306,
+    user: requiredEnv("DB_USER"),
+    password: process.env.DB_PASSWORD == null ? "" : String(process.env.DB_PASSWORD),
+    database: requiredEnv("DB_NAME"),
+    waitForConnections: true,
+    connectionLimit: Number(process.env.DB_CONNECTION_LIMIT) || 10,
+    queueLimit: Number(process.env.DB_QUEUE_LIMIT) || 0,
+    namedPlaceholders: false,
+    dateStrings: true,
+    charset: "utf8mb4",
+  });
+}
+
+async function query(sql, params = []) {
+  const [rows] = await pool.query(sql, params);
+  return rows;
+}
+
+async function queryOne(sql, params = []) {
+  const rows = await query(sql, params);
+  return rows[0] || null;
+}
+
+async function execute(sql, params = []) {
+  const [result] = await pool.execute(sql, params);
+  return result;
+}
+
+async function withTransaction(work) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const api = {
+      query: async (sql, params = []) => {
+        const [rows] = await connection.query(sql, params);
+        return rows;
+      },
+      execute: async (sql, params = []) => {
+        const [result] = await connection.execute(sql, params);
+        return result;
+      },
+    };
+    const value = await work(api);
+    await connection.commit();
+    return value;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
   }
 }
 
-const findApp = db.prepare("SELECT id FROM apps WHERE name = ? AND edition = ?");
-for (const row of APP_CATALOG) {
-  if (!findApp.get(row[0], row[5])) insertApp.run(...row);
+async function ensureSchema() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS settings (
+      \`key\` VARCHAR(120) NOT NULL PRIMARY KEY,
+      value TEXT NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS admins (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      username VARCHAR(80) NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      must_change TINYINT(1) NOT NULL DEFAULT 1,
+      created_at VARCHAR(40) NOT NULL,
+      UNIQUE KEY uq_admins_username (username)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS stats (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      value INT NOT NULL,
+      suffix VARCHAR(8) NOT NULL DEFAULT '',
+      label VARCHAR(80) NOT NULL,
+      sort_order INT NOT NULL DEFAULT 0,
+      visible TINYINT(1) NOT NULL DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS services (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      icon VARCHAR(16) NOT NULL DEFAULT '',
+      title VARCHAR(120) NOT NULL,
+      description TEXT NOT NULL,
+      sort_order INT NOT NULL DEFAULT 0,
+      visible TINYINT(1) NOT NULL DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS products (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(120) NOT NULL,
+      description TEXT NOT NULL,
+      link VARCHAR(300) NOT NULL DEFAULT '',
+      sort_order INT NOT NULL DEFAULT 0,
+      visible TINYINT(1) NOT NULL DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS apps (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(80) NOT NULL,
+      tagline VARCHAR(140) NOT NULL DEFAULT '',
+      description TEXT NOT NULL,
+      photos TEXT NOT NULL,
+      video VARCHAR(300) NOT NULL DEFAULT '',
+      link VARCHAR(300) NOT NULL DEFAULT '',
+      family VARCHAR(20) NOT NULL DEFAULT 'bingo',
+      channel VARCHAR(20) NOT NULL DEFAULT 'both',
+      edition VARCHAR(40) NOT NULL DEFAULT '',
+      sort_order INT NOT NULL DEFAULT 0,
+      visible TINYINT(1) NOT NULL DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS process_steps (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(120) NOT NULL,
+      description TEXT NOT NULL,
+      sort_order INT NOT NULL DEFAULT 0,
+      visible TINYINT(1) NOT NULL DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS team_members (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(120) NOT NULL,
+      role VARCHAR(120) NOT NULL,
+      bio TEXT NOT NULL,
+      skills TEXT NOT NULL,
+      avatar_letter VARCHAR(2) NOT NULL DEFAULT '',
+      avatar_image VARCHAR(300) NOT NULL DEFAULT '',
+      sort_order INT NOT NULL DEFAULT 0,
+      visible TINYINT(1) NOT NULL DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS testimonials (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      quote TEXT NOT NULL,
+      name VARCHAR(120) NOT NULL,
+      company VARCHAR(160) NOT NULL DEFAULT '',
+      avatar_letter VARCHAR(2) NOT NULL DEFAULT '',
+      avatar_image VARCHAR(300) NOT NULL DEFAULT '',
+      sort_order INT NOT NULL DEFAULT 0,
+      visible TINYINT(1) NOT NULL DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS technologies (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(60) NOT NULL,
+      sort_order INT NOT NULL DEFAULT 0,
+      visible TINYINT(1) NOT NULL DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS faqs (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      question VARCHAR(200) NOT NULL,
+      answer TEXT NOT NULL,
+      sort_order INT NOT NULL DEFAULT 0,
+      visible TINYINT(1) NOT NULL DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS pricing_plans (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(80) NOT NULL,
+      amount VARCHAR(40) NOT NULL,
+      period VARCHAR(40) NOT NULL DEFAULT '',
+      description VARCHAR(300) NOT NULL DEFAULT '',
+      features TEXT NOT NULL,
+      featured TINYINT(1) NOT NULL DEFAULT 0,
+      badge VARCHAR(40) NOT NULL DEFAULT '',
+      button_text VARCHAR(40) NOT NULL DEFAULT 'Get Started',
+      sort_order INT NOT NULL DEFAULT 0,
+      visible TINYINT(1) NOT NULL DEFAULT 1
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(80) NOT NULL,
+      email VARCHAR(160) NOT NULL,
+      company VARCHAR(120) NOT NULL DEFAULT '',
+      service VARCHAR(120) NOT NULL DEFAULT '',
+      message TEXT NOT NULL,
+      is_read TINYINT(1) NOT NULL DEFAULT 0,
+      created_at VARCHAR(40) NOT NULL,
+      KEY idx_messages_created (created_at, id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS visits (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      day CHAR(10) NOT NULL,
+      created_at VARCHAR(40) NOT NULL,
+      KEY idx_visits_day (day)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
 }
 
-db.prepare(
-  `UPDATE settings SET value = ?
-   WHERE key = 'apps_text'
-     AND value IN (?, ?, ?)`
-).run(
-  "Bingo, Keno, and Spin — online and offline. Bingo includes named hall layouts and Telegram Normal and Super.",
-  "Bingo, Keno, Spin, and the next one you ship. Each app can carry its own photos and a video.",
-  "Live Bingo, Keno, and Spin. Clear rounds, fast draws, and a result people can follow.",
-  "Bingo, Keno, and Spin, online and offline. Bingo also runs on Telegram, in Normal and Super."
-);
+async function ensureAppsCatalog() {
+  const countRow = await queryOne("SELECT COUNT(*) AS count FROM apps");
+  if (!Number(countRow?.count || 0)) {
+    for (const row of APP_CATALOG) {
+      await execute(
+        `INSERT INTO apps (name, tagline, description, photos, video, link, family, channel, edition, sort_order, visible)
+         VALUES (?, ?, ?, '[]', '', '', ?, ?, ?, ?, 1)`,
+        row
+      );
+    }
+  } else {
+    for (const row of APP_CATALOG) {
+      const existing = await queryOne(
+        "SELECT id FROM apps WHERE name = ? AND edition = ? LIMIT 1",
+        [row[0], row[5]]
+      );
+      if (!existing) {
+        await execute(
+          `INSERT INTO apps (name, tagline, description, photos, video, link, family, channel, edition, sort_order, visible)
+           VALUES (?, ?, ?, '[]', '', '', ?, ?, ?, ?, 1)`,
+          row
+        );
+      }
+    }
+  }
 
-const adminCount = db.prepare("SELECT COUNT(*) AS count FROM admins").get().count;
-if (!adminCount) {
-  db.prepare(
-    "INSERT INTO admins (username, password_hash, must_change, created_at) VALUES (?, ?, 1, ?)"
-  ).run("admin", bcrypt.hashSync("admin123", 10), new Date().toISOString());
+  await execute(
+    `UPDATE settings SET value = ?
+     WHERE \`key\` = 'apps_text'
+       AND value IN (?, ?, ?)`,
+    [
+      "Bingo, Keno, and Spin — online and offline. Bingo includes named hall layouts and Telegram Normal and Super.",
+      "Bingo, Keno, Spin, and the next one you ship. Each app can carry its own photos and a video.",
+      "Live Bingo, Keno, and Spin. Clear rounds, fast draws, and a result people can follow.",
+      "Bingo, Keno, and Spin, online and offline. Bingo also runs on Telegram, in Normal and Super.",
+    ]
+  );
+}
+
+async function ensureAdmin() {
+  const adminCount = await queryOne("SELECT COUNT(*) AS count FROM admins");
+  if (Number(adminCount?.count || 0)) return;
+  await execute(
+    "INSERT INTO admins (username, password_hash, must_change, created_at) VALUES (?, ?, 1, ?)",
+    ["admin", bcrypt.hashSync("admin123", 10), new Date().toISOString()]
+  );
+}
+
+async function init() {
+  if (pool) return pool;
+  pool = createPool();
+  await pool.query("SELECT 1");
+  await ensureSchema();
+  await seed({ query, queryOne, execute, withTransaction });
+  await ensureAppsCatalog();
+  await ensureAdmin();
+  return pool;
 }
 
 function assertTable(table) {
@@ -263,87 +333,94 @@ function assertColumn(column) {
   }
 }
 
-function getSettings() {
+async function getSettings() {
   const merged = { ...DEFAULT_SETTINGS };
-  for (const row of db.prepare("SELECT key, value FROM settings").all()) {
+  const rows = await query("SELECT `key`, value FROM settings");
+  for (const row of rows) {
     if (Object.prototype.hasOwnProperty.call(merged, row.key)) merged[row.key] = row.value;
   }
   return merged;
 }
 
-function saveSettings(values) {
-  const upsert = db.prepare(`
-    INSERT INTO settings (key, value) VALUES (?, ?)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value
-  `);
-  const tx = db.transaction((entries) => {
-    for (const [key, value] of entries) upsert.run(key, value);
+async function saveSettings(values) {
+  await withTransaction(async (tx) => {
+    for (const [key, value] of Object.entries(values)) {
+      await tx.execute(
+        `INSERT INTO settings (\`key\`, value) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE value = VALUES(value)`,
+        [key, value]
+      );
+    }
   });
-  tx(Object.entries(values));
   return getSettings();
 }
 
-function listRows(table, { visibleOnly = false } = {}) {
+async function listRows(table, { visibleOnly = false } = {}) {
   assertTable(table);
   const where = visibleOnly ? "WHERE visible = 1" : "";
-  return db.prepare(`SELECT * FROM ${table} ${where} ORDER BY sort_order ASC, id ASC`).all();
+  return query(`SELECT * FROM ${table} ${where} ORDER BY sort_order ASC, id ASC`);
 }
 
-function getRow(table, id) {
+async function getRow(table, id) {
   assertTable(table);
-  return db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id);
+  return queryOne(`SELECT * FROM ${table} WHERE id = ?`, [id]);
 }
 
-function insertRow(table, data) {
+async function insertRow(table, data) {
   assertTable(table);
   const keys = Object.keys(data);
   keys.forEach(assertColumn);
-  const sort = db.prepare(`SELECT COALESCE(MAX(sort_order), -1) AS max FROM ${table}`).get().max + 1;
+  const maxRow = await queryOne(`SELECT COALESCE(MAX(sort_order), -1) AS max FROM ${table}`);
+  const sort = Number(maxRow?.max ?? -1) + 1;
   const columns = [...keys, "sort_order"];
   const sql = `INSERT INTO ${table} (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`;
-  const info = db.prepare(sql).run(...keys.map((key) => data[key]), sort);
-  return getRow(table, Number(info.lastInsertRowid));
+  const result = await execute(sql, [...keys.map((key) => data[key]), sort]);
+  return getRow(table, Number(result.insertId));
 }
 
-function updateRow(table, id, data) {
+async function updateRow(table, id, data) {
   assertTable(table);
-  const existing = getRow(table, id);
+  const existing = await getRow(table, id);
   if (!existing) return null;
   const keys = Object.keys(data);
   keys.forEach(assertColumn);
   const sql = `UPDATE ${table} SET ${keys.map((key) => `${key} = ?`).join(", ")} WHERE id = ?`;
-  db.prepare(sql).run(...keys.map((key) => data[key]), id);
+  await execute(sql, [...keys.map((key) => data[key]), id]);
   return getRow(table, id);
 }
 
-function deleteRow(table, id) {
+async function deleteRow(table, id) {
   assertTable(table);
-  return db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(id).changes > 0;
+  const result = await execute(`DELETE FROM ${table} WHERE id = ?`, [id]);
+  return result.affectedRows > 0;
 }
 
-function reorderRows(table, ids) {
+async function reorderRows(table, ids) {
   assertTable(table);
-  const update = db.prepare(`UPDATE ${table} SET sort_order = ? WHERE id = ?`);
-  const tx = db.transaction((list) => {
-    list.forEach((id, index) => {
-      const number = Number(id);
-      if (Number.isInteger(number) && number > 0) update.run(index, number);
-    });
+  await withTransaction(async (tx) => {
+    const list = Array.isArray(ids) ? ids : [];
+    for (let index = 0; index < list.length; index += 1) {
+      const number = Number(list[index]);
+      if (Number.isInteger(number) && number > 0) {
+        await tx.execute(`UPDATE ${table} SET sort_order = ? WHERE id = ?`, [index, number]);
+      }
+    }
   });
-  tx(Array.isArray(ids) ? ids : []);
 }
 
-function countRows(table) {
+async function countRows(table) {
   assertTable(table);
-  return db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count;
+  const row = await queryOne(`SELECT COUNT(*) AS count FROM ${table}`);
+  return Number(row?.count || 0);
 }
 
-function addMessage(message) {
-  const info = db.prepare(
+async function addMessage(message) {
+  const result = await execute(
     `INSERT INTO messages (name, email, company, service, message, is_read, created_at)
-     VALUES (?, ?, ?, ?, ?, 0, ?)`
-  ).run(message.name, message.email, message.company, message.service, message.message, new Date().toISOString());
-  return Number(info.lastInsertRowid);
+     VALUES (?, ?, ?, ?, ?, 0, ?)`,
+    [message.name, message.email, message.company, message.service, message.message, new Date().toISOString()]
+  );
+  return Number(result.insertId);
 }
 
 function messageWhere({ status = "all", q = "", from = null, to = null } = {}) {
@@ -353,9 +430,9 @@ function messageWhere({ status = "all", q = "", from = null, to = null } = {}) {
   if (status === "unread") clauses.push("is_read = 0");
   if (status === "read") clauses.push("is_read = 1");
 
-  const query = String(q || "").trim().slice(0, 80);
-  if (query) {
-    const like = `%${query.replace(/[%_]/g, "")}%`;
+  const queryText = String(q || "").trim().slice(0, 80);
+  if (queryText) {
+    const like = `%${queryText.replace(/[%_]/g, "")}%`;
     clauses.push("(name LIKE ? OR email LIKE ? OR company LIKE ? OR message LIKE ?)");
     params.push(like, like, like, like);
   }
@@ -375,37 +452,44 @@ function messageWhere({ status = "all", q = "", from = null, to = null } = {}) {
   };
 }
 
-function listMessages({ status = "all", q = "", from = null, to = null, limit = 300 } = {}) {
+async function listMessages({ status = "all", q = "", from = null, to = null, limit = 300 } = {}) {
   const { where, params } = messageWhere({ status, q, from, to });
   const cap = Math.min(Math.max(Number(limit) || 300, 1), 300);
-  return db.prepare(`SELECT * FROM messages ${where} ORDER BY created_at DESC, id DESC LIMIT ?`).all(...params, cap);
+  return query(
+    `SELECT * FROM messages ${where} ORDER BY created_at DESC, id DESC LIMIT ?`,
+    [...params, cap]
+  );
 }
 
-function countFilteredMessages({ status = "all", q = "", from = null, to = null } = {}) {
+async function countFilteredMessages({ status = "all", q = "", from = null, to = null } = {}) {
   const { where, params } = messageWhere({ status, q, from, to });
-  return db.prepare(`SELECT COUNT(*) AS count FROM messages ${where}`).get(...params).count;
+  const row = await queryOne(`SELECT COUNT(*) AS count FROM messages ${where}`, params);
+  return Number(row?.count || 0);
 }
 
-function getMessage(id) {
-  return db.prepare("SELECT * FROM messages WHERE id = ?").get(id);
+async function getMessage(id) {
+  return queryOne("SELECT * FROM messages WHERE id = ?", [id]);
 }
 
-function setMessageRead(id, isRead) {
-  return db.prepare("UPDATE messages SET is_read = ? WHERE id = ?").run(isRead ? 1 : 0, id).changes > 0;
+async function setMessageRead(id, isRead) {
+  const result = await execute("UPDATE messages SET is_read = ? WHERE id = ?", [isRead ? 1 : 0, id]);
+  return result.affectedRows > 0;
 }
 
-function markAllRead() {
-  return db.prepare("UPDATE messages SET is_read = 1 WHERE is_read = 0").run().changes;
+async function markAllRead() {
+  const result = await execute("UPDATE messages SET is_read = 1 WHERE is_read = 0");
+  return result.affectedRows;
 }
 
-function deleteMessage(id) {
-  return db.prepare("DELETE FROM messages WHERE id = ?").run(id).changes > 0;
+async function deleteMessage(id) {
+  const result = await execute("DELETE FROM messages WHERE id = ?", [id]);
+  return result.affectedRows > 0;
 }
 
-function messageCounts() {
-  const total = db.prepare("SELECT COUNT(*) AS count FROM messages").get().count;
-  const unread = db.prepare("SELECT COUNT(*) AS count FROM messages WHERE is_read = 0").get().count;
-  return { total, unread };
+async function messageCounts() {
+  const total = await queryOne("SELECT COUNT(*) AS count FROM messages");
+  const unread = await queryOne("SELECT COUNT(*) AS count FROM messages WHERE is_read = 0");
+  return { total: Number(total?.count || 0), unread: Number(unread?.count || 0) };
 }
 
 function nairobiParts(date = new Date()) {
@@ -436,21 +520,23 @@ function dayKey(date) {
   return dayKeyFromParts(nairobiParts(date));
 }
 
-function recordVisit() {
+async function recordVisit() {
   const now = new Date();
-  db.prepare("INSERT INTO visits (day, created_at) VALUES (?, ?)").run(dayKey(now), now.toISOString());
+  await execute("INSERT INTO visits (day, created_at) VALUES (?, ?)", [dayKey(now), now.toISOString()]);
 }
 
-function visitStats({ from = null, to = null } = {}) {
-  const total = db.prepare("SELECT COUNT(*) AS count FROM visits").get().count;
+async function visitStats({ from = null, to = null } = {}) {
+  const totalRow = await queryOne("SELECT COUNT(*) AS count FROM visits");
+  const total = Number(totalRow?.count || 0);
   const today = nairobiParts();
   const start = from ? nairobiParts(new Date(from)) : shiftNairobi(today, -6);
   const end = to ? nairobiParts(new Date(to)) : shiftNairobi(today, 1);
   const startKey = dayKeyFromParts(start);
   const endKey = dayKeyFromParts(end);
-  const rows = db.prepare(
-    "SELECT day, COUNT(*) AS count FROM visits WHERE day >= ? AND day < ? GROUP BY day"
-  ).all(startKey, endKey);
+  const rows = await query(
+    "SELECT day, COUNT(*) AS count FROM visits WHERE day >= ? AND day < ? GROUP BY day",
+    [startKey, endKey]
+  );
   let dayCount = 0;
   let walker = start;
   while (dayKeyFromParts(walker) < endKey && dayCount < 400) {
@@ -464,7 +550,11 @@ function visitStats({ from = null, to = null } = {}) {
     let cursor = { year: start.year, month: start.month, day: 1 };
     while (buckets.length < 24) {
       const monthStart = dayKeyFromParts(cursor);
-      const next = { year: cursor.month === 12 ? cursor.year + 1 : cursor.year, month: cursor.month === 12 ? 1 : cursor.month + 1, day: 1 };
+      const next = {
+        year: cursor.month === 12 ? cursor.year + 1 : cursor.year,
+        month: cursor.month === 12 ? 1 : cursor.month + 1,
+        day: 1,
+      };
       if (monthStart >= endKey) break;
       const labelDate = new Date(Date.UTC(cursor.year, cursor.month - 1, 1) - 3 * 60 * 60 * 1000);
       buckets.push({
@@ -476,12 +566,12 @@ function visitStats({ from = null, to = null } = {}) {
     }
     rows.forEach((row) => {
       const bucket = buckets.find((item) => item.day === row.day.slice(0, 7));
-      if (bucket) bucket.count += row.count;
+      if (bucket) bucket.count += Number(row.count);
     });
     return { total, week: buckets.reduce((sum, item) => sum + item.count, 0), series: buckets };
   }
 
-  const counts = Object.fromEntries(rows.map((row) => [row.day, row.count]));
+  const counts = Object.fromEntries(rows.map((row) => [row.day, Number(row.count)]));
   const series = [];
   let cursor = start;
   while (dayKeyFromParts(cursor) < endKey && series.length < 45) {
@@ -499,28 +589,29 @@ function visitStats({ from = null, to = null } = {}) {
   return { total, week: series.reduce((sum, item) => sum + item.count, 0), series };
 }
 
-function findAdmin(username) {
-  return db.prepare("SELECT * FROM admins WHERE lower(username) = lower(?)").get(username);
+async function findAdmin(username) {
+  return queryOne("SELECT * FROM admins WHERE LOWER(username) = LOWER(?) LIMIT 1", [username]);
 }
 
-function getAdmin(id) {
-  return db.prepare("SELECT id, username, must_change, created_at FROM admins WHERE id = ?").get(id);
+async function getAdmin(id) {
+  return queryOne("SELECT id, username, must_change, created_at FROM admins WHERE id = ?", [id]);
 }
 
-function getAdminAuth(id) {
-  return db.prepare("SELECT * FROM admins WHERE id = ?").get(id);
+async function getAdminAuth(id) {
+  return queryOne("SELECT * FROM admins WHERE id = ?", [id]);
 }
 
-function setPassword(id, passwordHash) {
-  db.prepare("UPDATE admins SET password_hash = ?, must_change = 0 WHERE id = ?").run(passwordHash, id);
+async function setPassword(id, passwordHash) {
+  await execute("UPDATE admins SET password_hash = ?, must_change = 0 WHERE id = ?", [passwordHash, id]);
 }
 
-function passwordChangeRequired() {
-  const admin = db.prepare("SELECT must_change FROM admins ORDER BY id ASC LIMIT 1").get();
+async function passwordChangeRequired() {
+  const admin = await queryOne("SELECT must_change FROM admins ORDER BY id ASC LIMIT 1");
   return !!(admin && admin.must_change);
 }
 
 module.exports = {
+  init,
   getSettings,
   saveSettings,
   listRows,

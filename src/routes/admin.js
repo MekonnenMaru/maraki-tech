@@ -88,7 +88,7 @@ function presentMessage(row) {
   };
 }
 
-router.post("/login", (req, res, next) => {
+router.post("/login", async (req, res, next) => {
   try {
     const ip = clientIp(req);
     if (limited("login", ip, 8, WINDOW)) {
@@ -101,7 +101,7 @@ router.post("/login", (req, res, next) => {
       return res.status(400).json({ error: "Enter your username and password." });
     }
 
-    const admin = db.findAdmin(username);
+    const admin = await db.findAdmin(username);
     if (!admin || !bcrypt.compareSync(password, admin.password_hash)) {
       strike("login", ip, WINDOW);
       return res.status(401).json({ error: "Invalid username or password." });
@@ -129,24 +129,32 @@ router.post("/logout", (req, res) => {
   });
 });
 
-router.get("/me", (req, res) => {
-  const admin = db.getAdmin(req.session.adminId);
-  if (!admin) return res.status(401).json({ error: "Please sign in." });
-  res.json({ username: admin.username, mustChange: !!admin.must_change });
+router.get("/me", async (req, res, next) => {
+  try {
+    const admin = await db.getAdmin(req.session.adminId);
+    if (!admin) return res.status(401).json({ error: "Please sign in." });
+    res.json({ username: admin.username, mustChange: !!admin.must_change });
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.put("/password", (req, res) => {
-  const currentPassword = String((req.body && req.body.currentPassword) || "");
-  const newPassword = String((req.body && req.body.newPassword) || "");
-  if (newPassword.length < 8) fail(400, "Use at least 8 characters.");
-  if (newPassword.length > 200) fail(400, "That password is too long.");
+router.put("/password", async (req, res, next) => {
+  try {
+    const currentPassword = String((req.body && req.body.currentPassword) || "");
+    const newPassword = String((req.body && req.body.newPassword) || "");
+    if (newPassword.length < 8) fail(400, "Use at least 8 characters.");
+    if (newPassword.length > 200) fail(400, "That password is too long.");
 
-  const admin = db.getAdminAuth(req.session.adminId);
-  if (!admin || !bcrypt.compareSync(currentPassword, admin.password_hash)) {
-    fail(400, "Current password is incorrect.");
+    const admin = await db.getAdminAuth(req.session.adminId);
+    if (!admin || !bcrypt.compareSync(currentPassword, admin.password_hash)) {
+      fail(400, "Current password is incorrect.");
+    }
+    await db.setPassword(admin.id, bcrypt.hashSync(newPassword, 10));
+    res.json({ ok: true });
+  } catch (error) {
+    next(error);
   }
-  db.setPassword(admin.id, bcrypt.hashSync(newPassword, 10));
-  res.json({ ok: true });
 });
 
 function queryInstant(value) {
@@ -156,44 +164,56 @@ function queryInstant(value) {
   return date.toISOString();
 }
 
-router.get("/dashboard", (req, res) => {
-  const messages = db.messageCounts();
-  const from = queryInstant(req.query.from);
-  const to = queryInstant(req.query.to);
-  const visits = db.visitStats({ from, to });
-  const counts = {};
-  for (const [name, spec] of Object.entries(COLLECTIONS)) {
-    counts[name] = db.countRows(spec.table);
+router.get("/dashboard", async (req, res, next) => {
+  try {
+    const messages = await db.messageCounts();
+    const from = queryInstant(req.query.from);
+    const to = queryInstant(req.query.to);
+    const visits = await db.visitStats({ from, to });
+    const counts = {};
+    for (const [name, spec] of Object.entries(COLLECTIONS)) {
+      counts[name] = await db.countRows(spec.table);
+    }
+    const recent = (await db.listMessages({ limit: 5, from, to })).map(presentMessage);
+    res.json({ messages, visits, counts, recent, settings: await db.getSettings() });
+  } catch (error) {
+    next(error);
   }
-  const recent = db.listMessages({ limit: 5, from, to }).map(presentMessage);
-  res.json({ messages, visits, counts, recent, settings: db.getSettings() });
 });
 
-router.get("/settings", (req, res) => {
-  res.json(db.getSettings());
+router.get("/settings", async (req, res, next) => {
+  try {
+    res.json(await db.getSettings());
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.get("/schema", (req, res) => {
   res.json({ groups: GROUPS });
 });
 
-router.put("/settings", (req, res) => {
-  const input = req.body;
-  if (!input || typeof input !== "object" || Array.isArray(input)) fail(400, "Invalid data.");
+router.put("/settings", async (req, res, next) => {
+  try {
+    const input = req.body;
+    if (!input || typeof input !== "object" || Array.isArray(input)) fail(400, "Invalid data.");
 
-  const next = {};
-  for (const key of Object.keys(DEFAULT_SETTINGS)) {
-    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
-    let value = input[key];
-    if (typeof value === "boolean") value = value ? "1" : "0";
-    value = value == null ? "" : String(value).trim();
-    if (key.startsWith("show_")) value = value === "1" || value === "true" ? "1" : "0";
-    if (value.length > 2000) fail(400, `${key.replace(/_/g, " ")} is too long.`);
-    next[key] = value;
+    const next = {};
+    for (const key of Object.keys(DEFAULT_SETTINGS)) {
+      if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
+      let value = input[key];
+      if (typeof value === "boolean") value = value ? "1" : "0";
+      value = value == null ? "" : String(value).trim();
+      if (key.startsWith("show_")) value = value === "1" || value === "true" ? "1" : "0";
+      if (value.length > 2000) fail(400, `${key.replace(/_/g, " ")} is too long.`);
+      next[key] = value;
+    }
+
+    if (!Object.keys(next).length) fail(400, "Nothing to update.");
+    res.json(await db.saveSettings(next));
+  } catch (error) {
+    next(error);
   }
-
-  if (!Object.keys(next).length) fail(400, "Nothing to update.");
-  res.json(db.saveSettings(next));
 });
 
 router.post("/upload", (req, res, next) => {
@@ -218,81 +238,126 @@ router.post("/upload/video", (req, res) => {
   });
 });
 
-router.get("/messages", (req, res) => {
-  const status = ["unread", "read"].includes(req.query.status) ? req.query.status : "all";
-  const filter = {
-    status,
-    q: req.query.q || "",
-    from: queryInstant(req.query.from),
-    to: queryInstant(req.query.to),
-  };
-  const messages = db.listMessages(filter).map(presentMessage);
-  res.json({
-    messages,
-    matched: db.countFilteredMessages(filter),
-    limit: 300,
-    counts: db.messageCounts(),
-  });
+router.get("/messages", async (req, res, next) => {
+  try {
+    const status = ["unread", "read"].includes(req.query.status) ? req.query.status : "all";
+    const filter = {
+      status,
+      q: req.query.q || "",
+      from: queryInstant(req.query.from),
+      to: queryInstant(req.query.to),
+    };
+    const messages = (await db.listMessages(filter)).map(presentMessage);
+    res.json({
+      messages,
+      matched: await db.countFilteredMessages(filter),
+      limit: 300,
+      counts: await db.messageCounts(),
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.patch("/messages/read-all", (req, res) => {
-  db.markAllRead();
-  res.json({ ok: true, counts: db.messageCounts() });
+router.patch("/messages/read-all", async (req, res, next) => {
+  try {
+    await db.markAllRead();
+    res.json({ ok: true, counts: await db.messageCounts() });
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.patch("/messages/:id", (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id) || id <= 0) fail(400, "Invalid id.");
-  const isRead = !!(req.body && req.body.is_read);
-  if (!db.setMessageRead(id, isRead)) fail(404, "Message not found.");
-  res.json({ message: presentMessage(db.getMessage(id)), counts: db.messageCounts() });
+router.patch("/messages/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) fail(400, "Invalid id.");
+    const isRead = !!(req.body && req.body.is_read);
+    if (!(await db.setMessageRead(id, isRead))) fail(404, "Message not found.");
+    res.json({
+      message: presentMessage(await db.getMessage(id)),
+      counts: await db.messageCounts(),
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.delete("/messages/:id", (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id) || id <= 0) fail(400, "Invalid id.");
-  if (!db.deleteMessage(id)) fail(404, "Message not found.");
-  res.json({ ok: true, counts: db.messageCounts() });
+router.delete("/messages/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) fail(400, "Invalid id.");
+    if (!(await db.deleteMessage(id))) fail(404, "Message not found.");
+    res.json({ ok: true, counts: await db.messageCounts() });
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.get("/:collection", (req, res) => {
-  const spec = COLLECTIONS[req.params.collection];
-  if (!spec) fail(404, "Not found.");
-  res.json(db.listRows(spec.table).map((row) => present(req.params.collection, row)));
+router.get("/:collection", async (req, res, next) => {
+  try {
+    const spec = COLLECTIONS[req.params.collection];
+    if (!spec) fail(404, "Not found.");
+    const rows = await db.listRows(spec.table);
+    res.json(rows.map((row) => present(req.params.collection, row)));
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.post("/:collection/reorder", (req, res) => {
-  const spec = COLLECTIONS[req.params.collection];
-  if (!spec) fail(404, "Not found.");
-  if (!req.body || !Array.isArray(req.body.ids)) fail(400, "Provide the new order.");
-  db.reorderRows(spec.table, req.body.ids);
-  res.json(db.listRows(spec.table).map((row) => present(req.params.collection, row)));
+router.post("/:collection/reorder", async (req, res, next) => {
+  try {
+    const spec = COLLECTIONS[req.params.collection];
+    if (!spec) fail(404, "Not found.");
+    if (!req.body || !Array.isArray(req.body.ids)) fail(400, "Provide the new order.");
+    await db.reorderRows(spec.table, req.body.ids);
+    const rows = await db.listRows(spec.table);
+    res.json(rows.map((row) => present(req.params.collection, row)));
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.post("/:collection", (req, res) => {
-  const name = req.params.collection;
-  if (!COLLECTIONS[name]) fail(404, "Not found.");
-  const row = db.insertRow(COLLECTIONS[name].table, sanitize(name, req.body));
-  res.status(201).json(present(name, row));
+router.post("/:collection", async (req, res, next) => {
+  try {
+    const name = req.params.collection;
+    if (!COLLECTIONS[name]) fail(404, "Not found.");
+    const row = await db.insertRow(COLLECTIONS[name].table, sanitize(name, req.body));
+    res.status(201).json(present(name, row));
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.put("/:collection/:id", (req, res) => {
-  const name = req.params.collection;
-  if (!COLLECTIONS[name]) fail(404, "Not found.");
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id) || id <= 0) fail(400, "Invalid id.");
-  const row = db.updateRow(COLLECTIONS[name].table, id, sanitize(name, req.body, { partial: true }));
-  if (!row) fail(404, "Not found.");
-  res.json(present(name, row));
+router.put("/:collection/:id", async (req, res, next) => {
+  try {
+    const name = req.params.collection;
+    if (!COLLECTIONS[name]) fail(404, "Not found.");
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) fail(400, "Invalid id.");
+    const row = await db.updateRow(
+      COLLECTIONS[name].table,
+      id,
+      sanitize(name, req.body, { partial: true })
+    );
+    if (!row) fail(404, "Not found.");
+    res.json(present(name, row));
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.delete("/:collection/:id", (req, res) => {
-  const spec = COLLECTIONS[req.params.collection];
-  if (!spec) fail(404, "Not found.");
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id) || id <= 0) fail(400, "Invalid id.");
-  if (!db.deleteRow(spec.table, id)) fail(404, "Not found.");
-  res.json({ ok: true });
+router.delete("/:collection/:id", async (req, res, next) => {
+  try {
+    const spec = COLLECTIONS[req.params.collection];
+    if (!spec) fail(404, "Not found.");
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) fail(400, "Invalid id.");
+    if (!(await db.deleteRow(spec.table, id))) fail(404, "Not found.");
+    res.json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;

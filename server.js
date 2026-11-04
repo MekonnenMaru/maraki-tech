@@ -7,7 +7,21 @@ const session = require("express-session");
 const envPath = path.join(__dirname, ".env");
 if (!fs.existsSync(envPath)) {
   const secret = crypto.randomBytes(32).toString("hex");
-  fs.writeFileSync(envPath, `PORT=3000\nSESSION_SECRET=${secret}\n`);
+  fs.writeFileSync(
+    envPath,
+    [
+      "PORT=3000",
+      `SESSION_SECRET=${secret}`,
+      "DB_HOST=localhost",
+      "DB_PORT=3306",
+      "DB_USER=root",
+      "DB_PASSWORD=",
+      "DB_NAME=maraki_tech",
+      "DB_CONNECTION_LIMIT=10",
+      "DB_QUEUE_LIMIT=0",
+      "",
+    ].join("\n")
+  );
 }
 
 require("dotenv").config({ path: envPath });
@@ -17,48 +31,65 @@ if (!process.env.SESSION_SECRET) {
   process.exit(1);
 }
 
+for (const key of ["DB_HOST", "DB_USER", "DB_NAME"]) {
+  if (!String(process.env[key] || "").trim()) {
+    console.error(`Set ${key} in the .env file before starting.`);
+    process.exit(1);
+  }
+}
+
 const db = require("./src/db");
 const publicRoutes = require("./src/routes/public");
 const adminRoutes = require("./src/routes/admin");
 
-const app = express();
-const port = Number(process.env.PORT) || 3000;
-const publicDir = path.join(__dirname, "public");
+async function start() {
+  try {
+    await db.init();
+  } catch (error) {
+    console.error("Could not connect to MySQL.");
+    console.error(error.message || error);
+    console.error("Check DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, and DB_NAME in .env.");
+    process.exit(1);
+  }
 
-app.disable("x-powered-by");
-app.use((req, res, next) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.setHeader("X-Frame-Options", "SAMEORIGIN");
-  next();
-});
-app.use(express.json({ limit: "1mb" }));
-app.use(
-  session({
-    name: "maraki.sid",
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    rolling: true,
-    cookie: {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 1000 * 60 * 60 * 12,
-    },
-  })
-);
+  const app = express();
+  const port = Number(process.env.PORT) || 3000;
+  const publicDir = path.join(__dirname, "public");
 
-app.use("/api/admin", adminRoutes);
-app.use("/api", publicRoutes);
-app.use(express.static(publicDir));
+  app.disable("x-powered-by");
+  app.use((req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    next();
+  });
+  app.use(express.json({ limit: "1mb" }));
+  app.use(
+    session({
+      name: "maraki.sid",
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      rolling: true,
+      cookie: {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false,
+        maxAge: 1000 * 60 * 60 * 12,
+      },
+    })
+  );
 
-app.use((req, res) => {
-  if (req.path.startsWith("/api")) return res.status(404).json({ error: "Not found." });
-  res
-    .status(404)
-    .type("html")
-    .send(`<!DOCTYPE html>
+  app.use("/api/admin", adminRoutes);
+  app.use("/api", publicRoutes);
+  app.use(express.static(publicDir));
+
+  app.use((req, res) => {
+    if (req.path.startsWith("/api")) return res.status(404).json({ error: "Not found." });
+    res
+      .status(404)
+      .type("html")
+      .send(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -76,32 +107,36 @@ app.use((req, res) => {
   </div>
 </body>
 </html>`);
-});
-
-app.use((error, req, res, next) => {
-  if (res.headersSent) return next(error);
-  if (error.type === "entity.parse.failed") {
-    return res.status(400).json({ error: "Invalid JSON." });
-  }
-  const status = error.status || 500;
-  if (status >= 500) console.error(error);
-  res.status(status).json({
-    error: status >= 500 ? "Something went wrong." : error.message,
   });
-});
 
-const server = app.listen(port, () => {
-  const passwordNote = db.passwordChangeRequired()
-    ? "\nAdmin login: admin / admin123  — change this after you sign in."
-    : "";
-  console.log(`Maraki Tech is running at http://localhost:${port}`);
-  console.log(`Admin dashboard: http://localhost:${port}/admin${passwordNote}`);
-});
+  app.use((error, req, res, next) => {
+    if (res.headersSent) return next(error);
+    if (error.type === "entity.parse.failed") {
+      return res.status(400).json({ error: "Invalid JSON." });
+    }
+    const status = error.status || 500;
+    if (status >= 500) console.error(error);
+    res.status(status).json({
+      error: status >= 500 ? "Something went wrong." : error.message,
+    });
+  });
 
-server.on("error", (error) => {
-  if (error.code === "EADDRINUSE") {
-    console.error(`Port ${port} is already in use. Set PORT in .env or stop the other process.`);
-    process.exit(1);
-  }
-  throw error;
-});
+  const server = app.listen(port, async () => {
+    const mustChange = await db.passwordChangeRequired();
+    const passwordNote = mustChange
+      ? "\nAdmin login: admin / admin123  — change this after you sign in."
+      : "";
+    console.log(`Maraki Tech is running at http://localhost:${port}`);
+    console.log(`Admin dashboard: http://localhost:${port}/admin${passwordNote}`);
+  });
+
+  server.on("error", (error) => {
+    if (error.code === "EADDRINUSE") {
+      console.error(`Port ${port} is already in use. Set PORT in .env or stop the other process.`);
+      process.exit(1);
+    }
+    throw error;
+  });
+}
+
+start();
