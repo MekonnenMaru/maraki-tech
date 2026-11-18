@@ -131,12 +131,14 @@
     const s = data.settings;
     const items = [
       [on(s, "show_solutions") && data.services.length, s.nav_solutions, "#solutions"],
-      [on(s, "show_products") && data.products.length, s.nav_products, "#products"],
-      [on(s, "show_apps") && data.apps && data.apps.length, s.nav_apps, "#apps"],
+      [
+        (on(s, "show_products") && data.products.length) || (on(s, "show_apps") && data.apps && data.apps.length),
+        s.nav_products,
+        "#products",
+      ],
       [on(s, "show_process") && data.process.length, s.nav_process, "#process"],
       [on(s, "show_team") && data.team.length, s.nav_team, "#developers"],
       [on(s, "show_pricing") && data.pricing.length, s.nav_pricing, "#pricing"],
-      [on(s, "show_contact"), s.nav_contact, "#contact"],
     ];
     const links = items
       .filter((item) => item[0] && item[1])
@@ -757,8 +759,11 @@
         </div>
         ${footerColumn("Product", [
           { show: on(s, "show_solutions") && data.services.length, href: "#solutions", label: s.nav_solutions },
-          { show: on(s, "show_products") && data.products.length, href: "#products", label: s.nav_products },
-          { show: on(s, "show_apps") && data.apps && data.apps.length, href: "#apps", label: s.nav_apps || "Apps" },
+          {
+            show: (on(s, "show_products") && data.products.length) || (on(s, "show_apps") && data.apps && data.apps.length),
+            href: "#products",
+            label: s.nav_products,
+          },
           { show: on(s, "show_pricing") && data.pricing.length, href: "#pricing", label: s.nav_pricing },
           { show: on(s, "show_tech") && data.technologies.length, href: "#technology", label: "Technology" },
         ])}

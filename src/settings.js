@@ -85,11 +85,9 @@ const GROUPS = [
     fields: [
       field("nav_solutions", "Solutions"),
       field("nav_products", "Products"),
-      field("nav_apps", "Apps"),
       field("nav_process", "Process"),
       field("nav_team", "Team"),
       field("nav_pricing", "Pricing"),
-      field("nav_contact", "Contact"),
       field("nav_cta", "Menu button"),
     ],
   },
@@ -181,11 +179,9 @@ const DEFAULT_SETTINGS = {
 
   nav_solutions: "Solutions",
   nav_products: "Products",
-  nav_apps: "Apps",
   nav_process: "Process",
   nav_team: "Team",
   nav_pricing: "Pricing",
-  nav_contact: "Contact",
   nav_cta: "Get Started",
 
   solutions_label: "What we do",
