@@ -366,166 +366,227 @@
       position: relative;
       display: grid;
       place-items: center;
+      isolation: isolate;
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 78%;
+      height: 78%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, rgba(24, 201, 100, 0.28) 0%, rgba(43, 187, 173, 0.16) 38%, transparent 72%);
+      filter: blur(18px);
+      animation: heroGlow 7s ease-in-out infinite;
+      z-index: 0;
+      pointer-events: none;
     }
 
     .hero-image {
       position: relative;
       width: 100%;
       height: 100%;
-      border-radius: 28px;
+      border-radius: 32px;
       overflow: hidden;
-      border: 1px solid var(--border);
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(43, 187, 173, 0.1);
+      border: 1px solid rgba(43, 187, 173, 0.22);
+      box-shadow:
+        0 40px 100px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 0 60px rgba(24, 201, 100, 0.12);
+      z-index: 1;
     }
 
-    .hero-image img {
+    .hero-image img,
+    .hero-fallback {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      opacity: 0.75;
-      transition: transform 0.6s ease;
+      display: block;
+      transform: scale(1.04);
+      animation: heroDrift 18s ease-in-out infinite alternate;
     }
 
-    .hero-image:hover img {
-      transform: scale(1.04);
+    .hero-image img {
+      opacity: 0.88;
+    }
+
+    .hero-fallback {
+      background:
+        radial-gradient(circle at 30% 28%, rgba(43, 187, 173, 0.35), transparent 42%),
+        radial-gradient(circle at 70% 70%, rgba(24, 201, 100, 0.22), transparent 46%),
+        linear-gradient(160deg, #0a120e, #050806 70%);
+    }
+
+    .hero-image::before {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+      z-index: 2;
     }
 
     .hero-image::after {
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(5, 8, 6, 0.4) 0%, rgba(5, 8, 6, 0.1) 40%, rgba(10, 74, 46, 0.5) 100%);
+      background:
+        linear-gradient(160deg, rgba(5, 8, 6, 0.18) 0%, transparent 42%, rgba(8, 40, 24, 0.45) 100%),
+        radial-gradient(circle at 70% 20%, rgba(43, 187, 173, 0.18), transparent 40%);
       pointer-events: none;
+      z-index: 1;
+    }
+
+    .hero-sheen {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        115deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.08) 46%,
+        transparent 58%
+      );
+      transform: translateX(-120%);
+      animation: heroSheen 7.5s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 3;
     }
 
     .orbit-system {
       position: absolute;
       top: 50%;
       left: 50%;
+      width: min(54%, 280px);
+      aspect-ratio: 1;
       transform: translate(-50%, -50%);
-      width: 220px;
-      height: 220px;
-      animation: orbitRotate 8s linear infinite;
-      z-index: 5;
+      z-index: 4;
+      pointer-events: none;
     }
 
     .orbit-ring {
       position: absolute;
       inset: 0;
-      border: 9px solid var(--logo-ring);
       border-radius: 50%;
-      opacity: 0.9;
+    }
+
+    .orbit-ring-outer {
+      border: 1.5px solid rgba(43, 187, 173, 0.55);
+      box-shadow: 0 0 24px rgba(43, 187, 173, 0.18);
+      animation: orbitSpin 14s linear infinite;
+    }
+
+    .orbit-ring-inner {
+      inset: 18%;
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      animation: orbitSpinReverse 22s linear infinite;
     }
 
     .meteor {
       position: absolute;
-      top: -14px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 42px;
-      height: 42px;
+      inset: 0;
+      animation: orbitSpin 14s linear infinite;
     }
 
     .meteor-dot {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 42px;
-      height: 42px;
-      background: var(--logo-dot);
+      top: -7px;
+      left: 50%;
+      width: 14px;
+      height: 14px;
+      margin-left: -7px;
+      background: #9ff5d0;
       border-radius: 50%;
       z-index: 2;
-      animation: meteorPulse 2s ease-in-out infinite;
+      box-shadow: 0 0 18px rgba(43, 187, 173, 0.9), 0 0 36px rgba(24, 201, 100, 0.45);
+      animation: meteorPulse 2.2s ease-in-out infinite;
     }
 
     .meteor-tail {
       position: absolute;
-      top: 50%;
-      right: 50%;
-      transform: translateY(-50%);
-      width: 180px;
-      height: 5px;
-      background: linear-gradient(to left, rgba(43, 187, 173, 0.9) 0%, rgba(43, 187, 173, 0.5) 20%, rgba(43, 187, 173, 0.2) 50%, rgba(43, 187, 173, 0.05) 80%, transparent 100%);
+      top: 0;
+      left: 50%;
+      width: 3px;
+      height: 42%;
+      margin-left: -1.5px;
+      background: linear-gradient(to bottom, rgba(43, 187, 173, 0.85), transparent);
       border-radius: 100px;
-      filter: blur(1px);
-      z-index: 1;
-      transform-origin: right center;
+      filter: blur(0.4px);
+      transform-origin: top center;
     }
 
     .meteor-tail::after {
       content: "";
       position: absolute;
-      top: 50%;
-      right: 0;
-      transform: translateY(-50%);
-      width: 150px;
-      height: 15px;
-      background: linear-gradient(to left, rgba(43, 187, 173, 0.3) 0%, rgba(43, 187, 173, 0.1) 40%, transparent 100%);
-      border-radius: 100px;
+      top: 0;
+      left: 50%;
+      width: 14px;
+      height: 70%;
+      margin-left: -7px;
+      background: linear-gradient(to bottom, rgba(43, 187, 173, 0.28), transparent);
       filter: blur(6px);
     }
 
     .core-ring {
-      width: 80px;
-      height: 80px;
-      border: 2px solid rgba(255, 255, 255, 0.08);
+      width: 28%;
+      height: 28%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 50%;
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      animation: coreBreath 4.5s ease-in-out infinite;
     }
 
-    @keyframes orbitRotate {
-      from { transform: translate(-50%, -50%) rotate(0deg); }
-      to { transform: translate(-50%, -50%) rotate(360deg); }
+    .core-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--accent-light);
+      box-shadow: 0 0 20px rgba(24, 201, 100, 0.8);
+      animation: meteorPulse 2.2s ease-in-out infinite;
+    }
+
+    @keyframes orbitSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes orbitSpinReverse {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
     }
 
     @keyframes meteorPulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(43, 187, 173, 0.6), 0 0 40px rgba(43, 187, 173, 0.3); }
-      50% { box-shadow: 0 0 30px rgba(43, 187, 173, 0.9), 0 0 60px rgba(43, 187, 173, 0.5); }
+      0%, 100% { box-shadow: 0 0 16px rgba(43, 187, 173, 0.55), 0 0 32px rgba(24, 201, 100, 0.25); }
+      50% { box-shadow: 0 0 28px rgba(43, 187, 173, 0.95), 0 0 54px rgba(24, 201, 100, 0.5); }
     }
 
-    .floating-card {
-      position: absolute;
-      padding: 16px;
-      min-width: 145px;
-      border: 1px solid var(--border);
-      background: rgba(12, 17, 14, 0.76);
-      backdrop-filter: blur(15px);
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-      z-index: 10;
-      animation: float 6s ease-in-out infinite;
+    @keyframes heroGlow {
+      0%, 100% { opacity: 0.55; transform: scale(0.96); }
+      50% { opacity: 1; transform: scale(1.05); }
     }
 
-    .card-top {
-      top: 30px;
-      right: -20px;
+    @keyframes heroDrift {
+      from { transform: scale(1.04) translate3d(0, 0, 0); }
+      to { transform: scale(1.1) translate3d(-1.5%, 1%, 0); }
     }
 
-    .card-bottom {
-      bottom: 30px;
-      left: -20px;
-      animation-delay: -3s;
+    @keyframes heroSheen {
+      0%, 55% { transform: translateX(-120%); opacity: 0; }
+      60% { opacity: 1; }
+      75% { transform: translateX(120%); opacity: 0.7; }
+      100% { transform: translateX(120%); opacity: 0; }
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .mini-label {
-      font-size: 10px;
-      color: #6f7c74;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .mini-value {
-      margin-top: 5px;
-      font-weight: 700;
-      font-size: 17px;
+    @keyframes coreBreath {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; }
+      50% { transform: translate(-50%, -50%) scale(1.12); opacity: 1; }
     }
 
     /* =========================================================
@@ -1629,41 +1690,7 @@
       }
 
       .orbit-system {
-        width: 180px;
-        height: 180px;
-      }
-
-      .orbit-ring {
-        border-width: 7px;
-      }
-
-      .meteor {
-        width: 34px;
-        height: 34px;
-        top: -11px;
-      }
-
-      .meteor-dot {
-        width: 34px;
-        height: 34px;
-      }
-
-      .meteor-tail {
-        width: 130px;
-        height: 4px;
-      }
-
-      .meteor-tail::after {
-        width: 100px;
-        height: 12px;
-      }
-
-      .card-top {
-        right: 10px;
-      }
-
-      .card-bottom {
-        left: 10px;
+        width: min(48%, 220px);
       }
 
       .services,
@@ -1751,10 +1778,6 @@
       .hero-buttons .btn,
       .cta-inner .btn {
         width: 100%;
-      }
-
-      .floating-card {
-        transform: scale(.85);
       }
 
       .section-title {

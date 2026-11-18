@@ -170,19 +170,17 @@
           </div>
         </div>
         <div class="hero-visual reveal">
-          <div class="hero-image">${media}</div>
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="hero-image">
+            ${media}
+            <div class="hero-sheen" aria-hidden="true"></div>
+          </div>
           <div class="orbit-system" aria-hidden="true">
-            <div class="orbit-ring"></div>
+            <div class="orbit-ring orbit-ring-outer"></div>
+            <div class="orbit-ring orbit-ring-inner"></div>
             <div class="meteor"><div class="meteor-tail"></div><div class="meteor-dot"></div></div>
             <div class="core-ring"></div>
-          </div>
-          <div class="floating-card card-top">
-            <div class="mini-label">${esc(s.float_top_label)}</div>
-            <div class="mini-value">${esc(s.float_top_value)}</div>
-          </div>
-          <div class="floating-card card-bottom">
-            <div class="mini-label">${esc(s.float_bottom_label)}</div>
-            <div class="mini-value">${esc(s.float_bottom_value)}</div>
+            <div class="core-dot"></div>
           </div>
         </div>
       </div>

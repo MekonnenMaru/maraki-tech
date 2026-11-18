@@ -570,10 +570,17 @@ html[data-theme="light"] .apps-close {
 
   .orb,
   .orbit-system,
+  .orbit-ring,
+  .meteor,
   .meteor-dot,
+  .core-ring,
+  .core-dot,
+  .hero-glow,
+  .hero-sheen,
+  .hero-image img,
+  .hero-fallback,
   .badge-dot,
   .logo-mark .dot,
-  .floating-card,
   .page-loader {
     animation: none !important;
     transition: none !important;
@@ -663,7 +670,6 @@ html[data-theme="light"] .hero h1 span {
 
 html[data-theme="light"] .badge,
 html[data-theme="light"] .btn-secondary,
-html[data-theme="light"] .floating-card,
 html[data-theme="light"] .service,
 html[data-theme="light"] .product,
 html[data-theme="light"] .developer,
@@ -680,13 +686,22 @@ html[data-theme="light"] footer {
   border-color: var(--border);
 }
 
-html[data-theme="light"] .floating-card,
 html[data-theme="light"] .service,
 html[data-theme="light"] .product,
 html[data-theme="light"] .price-card,
 html[data-theme="light"] .contact-form,
 html[data-theme="light"] .cta-inner {
   box-shadow: 0 16px 40px rgba(20, 40, 28, 0.08);
+}
+
+html[data-theme="light"] .hero-glow {
+  background:
+    radial-gradient(circle, rgba(12, 143, 68, 0.22) 0%, rgba(43, 187, 173, 0.12) 38%, transparent 72%);
+}
+
+html[data-theme="light"] .hero-image {
+  border-color: rgba(12, 143, 68, 0.22);
+  box-shadow: 0 28px 70px rgba(20, 40, 28, 0.12);
 }
 
 html[data-theme="light"] .price-card.featured {
