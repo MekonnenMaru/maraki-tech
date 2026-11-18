@@ -242,11 +242,26 @@ async function ensureSchema() {
       company VARCHAR(120) NOT NULL DEFAULT '',
       service VARCHAR(120) NOT NULL DEFAULT '',
       message TEXT NOT NULL,
+      country VARCHAR(80) NOT NULL DEFAULT '',
+      city VARCHAR(80) NOT NULL DEFAULT '',
+      phone VARCHAR(40) NOT NULL DEFAULT '',
+      source VARCHAR(40) NOT NULL DEFAULT '',
+      utm_source VARCHAR(120) NOT NULL DEFAULT '',
+      utm_medium VARCHAR(120) NOT NULL DEFAULT '',
+      utm_campaign VARCHAR(160) NOT NULL DEFAULT '',
+      utm_term VARCHAR(160) NOT NULL DEFAULT '',
+      utm_content VARCHAR(160) NOT NULL DEFAULT '',
+      landing_page VARCHAR(500) NOT NULL DEFAULT '',
+      referrer VARCHAR(500) NOT NULL DEFAULT '',
+      ip VARCHAR(64) NOT NULL DEFAULT '',
+      user_agent VARCHAR(300) NOT NULL DEFAULT '',
       is_read TINYINT(1) NOT NULL DEFAULT 0,
       created_at VARCHAR(40) NOT NULL,
       KEY idx_messages_created (created_at, id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+
+  await ensureMessageColumns();
 
   await query(`
     CREATE TABLE IF NOT EXISTS visits (
@@ -256,6 +271,31 @@ async function ensureSchema() {
       KEY idx_visits_day (day)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+}
+
+async function ensureMessageColumns() {
+  const columns = await query("SHOW COLUMNS FROM messages");
+  const names = new Set(columns.map((row) => row.Field));
+  const additions = [
+    ["country", "VARCHAR(80) NOT NULL DEFAULT ''"],
+    ["city", "VARCHAR(80) NOT NULL DEFAULT ''"],
+    ["phone", "VARCHAR(40) NOT NULL DEFAULT ''"],
+    ["source", "VARCHAR(40) NOT NULL DEFAULT ''"],
+    ["utm_source", "VARCHAR(120) NOT NULL DEFAULT ''"],
+    ["utm_medium", "VARCHAR(120) NOT NULL DEFAULT ''"],
+    ["utm_campaign", "VARCHAR(160) NOT NULL DEFAULT ''"],
+    ["utm_term", "VARCHAR(160) NOT NULL DEFAULT ''"],
+    ["utm_content", "VARCHAR(160) NOT NULL DEFAULT ''"],
+    ["landing_page", "VARCHAR(500) NOT NULL DEFAULT ''"],
+    ["referrer", "VARCHAR(500) NOT NULL DEFAULT ''"],
+    ["ip", "VARCHAR(64) NOT NULL DEFAULT ''"],
+    ["user_agent", "VARCHAR(300) NOT NULL DEFAULT ''"],
+  ];
+  for (const [name, definition] of additions) {
+    if (!names.has(name)) {
+      await execute(`ALTER TABLE messages ADD COLUMN \`${name}\` ${definition}`);
+    }
+  }
 }
 
 async function ensureAppsCatalog() {
@@ -425,9 +465,34 @@ async function countRows(table) {
 
 async function addMessage(message) {
   const result = await execute(
-    `INSERT INTO messages (name, email, company, service, message, is_read, created_at)
-     VALUES (?, ?, ?, ?, ?, 0, ?)`,
-    [message.name, message.email, message.company, message.service, message.message, new Date().toISOString()]
+    `INSERT INTO messages (
+      name, email, company, service, message,
+      country, city, phone, source,
+      utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+      landing_page, referrer, ip, user_agent,
+      is_read, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+    [
+      message.name,
+      message.email,
+      message.company,
+      message.service,
+      message.message,
+      message.country || "",
+      message.city || "",
+      message.phone || "",
+      message.source || "",
+      message.utm_source || "",
+      message.utm_medium || "",
+      message.utm_campaign || "",
+      message.utm_term || "",
+      message.utm_content || "",
+      message.landing_page || "",
+      message.referrer || "",
+      message.ip || "",
+      message.user_agent || "",
+      new Date().toISOString(),
+    ]
   );
   return Number(result.insertId);
 }
@@ -442,8 +507,10 @@ function messageWhere({ status = "all", q = "", from = null, to = null } = {}) {
   const queryText = String(q || "").trim().slice(0, 80);
   if (queryText) {
     const like = `%${queryText.replace(/[%_]/g, "")}%`;
-    clauses.push("(name LIKE ? OR email LIKE ? OR company LIKE ? OR message LIKE ?)");
-    params.push(like, like, like, like);
+    clauses.push(
+      "(name LIKE ? OR email LIKE ? OR company LIKE ? OR message LIKE ? OR country LIKE ? OR city LIKE ? OR source LIKE ? OR utm_source LIKE ? OR utm_campaign LIKE ?)"
+    );
+    params.push(like, like, like, like, like, like, like, like, like);
   }
 
   if (from) {

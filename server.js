@@ -79,6 +79,7 @@ async function start() {
   );
 
   app.disable("x-powered-by");
+  app.set("trust proxy", 1);
   app.use((req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -105,6 +106,35 @@ async function start() {
 
   app.use("/api/admin", adminRoutes);
   app.use("/api", publicRoutes);
+
+  app.get(["/privacy", "/privacy.html"], (req, res) => {
+    res.sendFile(path.join(publicDir, "privacy.html"));
+  });
+
+  app.get("/sitemap.xml", (req, res) => {
+    const host = String(req.get("x-forwarded-host") || req.get("host") || "localhost:3000")
+      .split(",")[0]
+      .trim();
+    const proto = String(req.get("x-forwarded-proto") || req.protocol || "http")
+      .split(",")[0]
+      .trim();
+    const base = `${proto}://${host}`.replace(/\/$/, "");
+    res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${base}/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${base}/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>
+`);
+  });
+
   app.use(express.static(publicDir));
 
   app.use((req, res) => {

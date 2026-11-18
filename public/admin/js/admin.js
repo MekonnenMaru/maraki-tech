@@ -552,7 +552,7 @@
           <thead>
             <tr>
               <th>Name</th>
-              <th>Category</th>
+              <th>Source</th>
               <th>Received</th>
               <th>Status</th>
               <th class="col-actions">Actions</th>
@@ -561,8 +561,8 @@
           <tbody>
             ${data.recent.map((message) => `
               <tr data-id="${message.id}" class="${message.is_read ? "" : "is-unread"}">
-                <td>${esc(message.name)}${message.company ? `<small>${esc(message.company)}</small>` : ""}</td>
-                <td>${message.service ? esc(message.service) : "—"}</td>
+                <td>${esc(message.name)}${message.company ? `<small>${esc(message.company)}</small>` : ""}${message.place ? `<small>${esc(message.place)}</small>` : ""}</td>
+                <td>${esc(sourceLabel(message))}${message.service ? `<small>${esc(message.service)}</small>` : ""}</td>
                 <td>${esc(when(message.created_at))}</td>
                 <td data-status>${readPill(message.is_read)}</td>
                 <td class="col-actions">
@@ -941,7 +941,7 @@
           <button type="button" data-status="unread">Unread</button>
           <button type="button" data-status="read">Read</button>
         </div>
-        <input class="search" id="msgSearch" placeholder="Search name, email, or message" value="${esc(inbox.q)}" />
+        <input class="search" id="msgSearch" placeholder="Search name, email, location, source, or message" value="${esc(inbox.q)}" />
         ${rangeControls("msg")}
       </div>
       <p class="msg-count" id="msgCount"></p>
@@ -1012,7 +1012,8 @@
       <thead>
         <tr>
           <th>Name</th>
-          <th>Email</th>
+          <th>Location</th>
+          <th>Source</th>
           <th>Category</th>
           <th>Message</th>
           <th>Received</th>
@@ -1024,7 +1025,8 @@
         ${data.messages.map((message) => `
           <tr data-id="${message.id}" class="${message.is_read ? "" : "is-unread"}">
             <td>${esc(message.name)}${message.company ? `<small>${esc(message.company)}</small>` : ""}</td>
-            <td>${esc(message.email)}</td>
+            <td>${message.place ? esc(message.place) : "—"}</td>
+            <td>${esc(sourceLabel(message))}</td>
             <td>${message.service ? esc(message.service) : "—"}</td>
             <td class="clip-cell">${esc(clip(message.message, 80))}</td>
             <td>${esc(when(message.created_at))}</td>
@@ -1046,13 +1048,44 @@
     }
   }
 
+  function sourceLabel(message) {
+    if (!message) return "—";
+    if (message.source === "google_ads") return "Google Ads";
+    if (message.source === "campaign") {
+      return message.utm_source ? `Campaign · ${message.utm_source}` : "Campaign";
+    }
+    if (message.source === "referral") return "Referral";
+    if (message.source === "direct") return "Direct";
+    return message.source || "—";
+  }
+
   function paintMessageModal(message) {
+    const metaBits = [
+      message.email,
+      message.phone,
+      message.company,
+      message.service,
+      message.place,
+    ].filter(Boolean);
+    const campaignBits = [
+      message.utm_source && `utm_source=${message.utm_source}`,
+      message.utm_medium && `utm_medium=${message.utm_medium}`,
+      message.utm_campaign && `utm_campaign=${message.utm_campaign}`,
+      message.utm_term && `utm_term=${message.utm_term}`,
+      message.utm_content && `utm_content=${message.utm_content}`,
+    ].filter(Boolean);
     modalRoot.innerHTML = `
       <div class="modal-back">
-        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="messageTitle">
+        <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="messageTitle">
           <h3 id="messageTitle">${esc(message.name)}</h3>
-          <p class="meta">${esc(message.email)}${message.company ? ` · ${esc(message.company)}` : ""}${message.service ? ` · ${esc(message.service)}` : ""}<br>${esc(when(message.created_at))}</p>
+          <p class="meta">${esc(metaBits.join(" · "))}<br>${esc(when(message.created_at))} · ${esc(sourceLabel(message))}</p>
           <p class="msg-body">${esc(message.message)}</p>
+          <div class="lead-meta">
+            ${message.landing_page ? `<div><span>Landing</span><code>${esc(message.landing_page)}</code></div>` : ""}
+            ${message.referrer ? `<div><span>Referrer</span><code>${esc(message.referrer)}</code></div>` : ""}
+            ${campaignBits.length ? `<div><span>UTM</span><code>${esc(campaignBits.join(" · "))}</code></div>` : ""}
+            ${message.ip ? `<div><span>IP</span><code>${esc(message.ip)}</code></div>` : ""}
+          </div>
           <div class="modal-actions">
             <button class="btn ghost" type="button" data-cancel>Close</button>
             <a class="btn ghost" href="mailto:${esc(message.email)}">Reply</a>

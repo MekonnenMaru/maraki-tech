@@ -826,6 +826,47 @@ button.stat-card:hover { border-color: rgba(57, 242, 127, 0.45); }
   box-shadow: var(--shadow);
 }
 
+.modal-card.wide {
+  width: min(760px, 100%);
+}
+
+.lead-meta {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+}
+
+.lead-meta div {
+  display: grid;
+  gap: 4px;
+}
+
+.lead-meta span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.lead-meta code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #d7e0da;
+  word-break: break-all;
+}
+
+html[data-theme="light"] .lead-meta {
+  background: rgba(20, 40, 28, 0.04);
+}
+
+html[data-theme="light"] .lead-meta code {
+  color: #24362c;
+}
+
 .modal-card h3 { margin: 0 0 8px; font-size: 24px; }
 
 .modal-card > p { color: var(--muted); }

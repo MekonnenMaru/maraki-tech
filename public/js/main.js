@@ -122,8 +122,10 @@
     footer.innerHTML = footerHtml(data);
     mountApps(s, apps);
     bindApps();
+    bindHeroClock();
     setupReveal();
     setupStats();
+    setupTracking(s);
     updateScroll();
   }
 
@@ -157,6 +159,9 @@
     const media = src
       ? `<img src="${esc(src)}" alt="${esc(s.hero_image_alt || "")}" fetchpriority="high" />`
       : '<div class="hero-fallback"></div>';
+    const ticks = Array.from({ length: 60 }, (_, index) =>
+      `<span class="clock-tick${index % 5 === 0 ? " major" : ""}" style="--i:${index}"></span>`
+    ).join("");
 
     return `
       <div class="hero">
@@ -175,16 +180,83 @@
             ${media}
             <div class="hero-sheen" aria-hidden="true"></div>
           </div>
-          <div class="orbit-system" aria-hidden="true">
-            <div class="orbit-ring orbit-ring-outer"></div>
-            <div class="orbit-ring orbit-ring-inner"></div>
-            <div class="meteor"><div class="meteor-tail"></div><div class="meteor-dot"></div></div>
-            <div class="core-ring"></div>
-            <div class="core-dot"></div>
+          <div class="hero-clock" role="img" aria-label="Current time in Nairobi">
+            <div class="clock-face" aria-hidden="true">
+              <div class="clock-ring"></div>
+              <div class="clock-ring soft"></div>
+              ${ticks}
+              <div class="clock-hand hour" data-clock-hour></div>
+              <div class="clock-hand minute" data-clock-minute></div>
+              <div class="clock-hand second" data-clock-second>
+                <span class="clock-second-tip"></span>
+              </div>
+              <div class="clock-hub"></div>
+            </div>
+            <div class="clock-readout">
+              <div class="clock-time" data-clock-time>00:00:00</div>
+              <div class="clock-zone">Nairobi · EAT</div>
+            </div>
           </div>
         </div>
       </div>
     `;
+  }
+
+  let clockTimer = null;
+
+  function nairobiClockParts(date = new Date()) {
+    const bag = {};
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Africa/Nairobi",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hourCycle: "h23",
+    }).formatToParts(date).forEach((part) => {
+      bag[part.type] = part.value;
+    });
+    return {
+      hour: Number(bag.hour),
+      minute: Number(bag.minute),
+      second: Number(bag.second),
+    };
+  }
+
+  function bindHeroClock() {
+    if (clockTimer) {
+      clearInterval(clockTimer);
+      clockTimer = null;
+    }
+    const root = document.querySelector(".hero-clock");
+    if (!root) return;
+    const hourHand = root.querySelector("[data-clock-hour]");
+    const minuteHand = root.querySelector("[data-clock-minute]");
+    const secondHand = root.querySelector("[data-clock-second]");
+    const readout = root.querySelector("[data-clock-time]");
+
+    const paint = () => {
+      const { hour, minute, second } = nairobiClockParts();
+      const hourAngle = ((hour % 12) * 30) + (minute * 0.5);
+      const minuteAngle = (minute * 6) + (second * 0.1);
+      const secondAngle = second * 6;
+      if (hourHand) hourHand.style.transform = `translate(-50%, 0) rotate(${hourAngle}deg)`;
+      if (minuteHand) minuteHand.style.transform = `translate(-50%, 0) rotate(${minuteAngle}deg)`;
+      if (secondHand) secondHand.style.transform = `translate(-50%, 0) rotate(${secondAngle}deg)`;
+      if (readout) {
+        readout.textContent = [
+          String(hour).padStart(2, "0"),
+          String(minute).padStart(2, "0"),
+          String(second).padStart(2, "0"),
+        ].join(":");
+      }
+      root.setAttribute(
+        "aria-label",
+        `Current time in Nairobi, ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(second).padStart(2, "0")} East Africa Time`
+      );
+    };
+
+    paint();
+    clockTimer = setInterval(paint, 1000);
   }
 
   function statsHtml(s, stats) {
@@ -669,26 +741,40 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="name">Full Name</label>
-                <input type="text" id="name" name="name" placeholder="Your name" required maxlength="80" />
+                <input type="text" id="name" name="name" placeholder="Your name" required maxlength="80" autocomplete="name" />
               </div>
               <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="you@company.com" required maxlength="160" />
+                <input type="email" id="email" name="email" placeholder="you@company.com" required maxlength="160" autocomplete="email" />
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="company">Company</label>
-                <input type="text" id="company" name="company" placeholder="Optional" maxlength="120" />
+                <input type="text" id="company" name="company" placeholder="Optional" maxlength="120" autocomplete="organization" />
               </div>
               <div class="form-group">
-                <label for="service">Service</label>
-                <select id="service" name="service">
-                  <option value="">Select a service</option>
-                  ${options}
-                  <option value="Other">Other</option>
-                </select>
+                <label for="phone_contact">Phone</label>
+                <input type="tel" id="phone_contact" name="phone" placeholder="Optional" maxlength="40" autocomplete="tel" />
               </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="country">Country</label>
+                <input type="text" id="country" name="country" placeholder="Where are you based?" required maxlength="80" autocomplete="country-name" />
+              </div>
+              <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" name="city" placeholder="Optional" maxlength="80" autocomplete="address-level2" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="service">Service</label>
+              <select id="service" name="service">
+                <option value="">Select a service</option>
+                ${options}
+                <option value="Other">Other</option>
+              </select>
             </div>
             <div class="form-group">
               <label for="message">Message</label>
@@ -697,6 +783,7 @@
             <button type="submit" class="form-submit">Send Message →</button>
             <p class="form-status" id="formStatus" role="status"></p>
             ${s.form_note ? `<p class="form-note">${esc(s.form_note)}</p>` : ""}
+            <p class="form-privacy">By sending, you agree to our <a href="/privacy">Privacy Policy</a>.</p>
           </form>
         </div>
       </section>
@@ -774,16 +861,177 @@
         ${footerColumn("Contact", [
           { show: !!s.email, href: `mailto:${s.email}`, label: s.email },
           { show: on(s, "show_contact"), href: "#contact", label: "Get a Quote" },
-          { show: on(s, "show_contact"), href: "#contact", label: "Support" },
+          { show: true, href: "/privacy", label: "Privacy" },
         ])}
       </div>
       <div class="footer-bottom">
         <div class="footer-bottom-inner">
           <div>© ${new Date().getFullYear()} <span class="footer-brand">${esc(s.footer_brand || "Maraki Tech")}</span>. All rights reserved.</div>
-          <div>${esc(s.footer_tagline || "")} · <a href="/admin">Admin</a></div>
+          <div>${esc(s.footer_tagline || "")} · <a href="/privacy">Privacy</a> · <a href="/admin">Admin</a></div>
         </div>
       </div>
     `;
+  }
+
+  const CONSENT_KEY = "mt_consent";
+  let trackingSettings = { ga4: "", adsId: "", adsLabel: "" };
+
+  function readConsent() {
+    try {
+      return localStorage.getItem(CONSENT_KEY) || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function writeConsent(value) {
+    try {
+      localStorage.setItem(CONSENT_KEY, value);
+    } catch (error) {}
+  }
+
+  function captureAttribution() {
+    const params = new URLSearchParams(window.location.search);
+    const keys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "gbraid", "wbraid"];
+    let stored = {};
+    try {
+      stored = JSON.parse(sessionStorage.getItem("mt_attr") || "{}") || {};
+    } catch (error) {
+      stored = {};
+    }
+    const next = { ...stored };
+    let changed = false;
+    keys.forEach((key) => {
+      const value = params.get(key);
+      if (value) {
+        next[key] = String(value).slice(0, 160);
+        changed = true;
+      }
+    });
+    if (!next.landing_page) {
+      next.landing_page = `${window.location.pathname}${window.location.search}`.slice(0, 500);
+      changed = true;
+    }
+    if (!next.referrer && document.referrer) {
+      next.referrer = String(document.referrer).slice(0, 500);
+      changed = true;
+    }
+    if (changed) {
+      try {
+        sessionStorage.setItem("mt_attr", JSON.stringify(next));
+      } catch (error) {}
+    }
+    return next;
+  }
+
+  function attributionPayload() {
+    const attr = captureAttribution();
+    let source = "direct";
+    if (attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === "cpc" || attr.utm_source === "google") {
+      source = "google_ads";
+    } else if (attr.utm_source) {
+      source = "campaign";
+    } else if (attr.referrer) {
+      try {
+        const host = new URL(attr.referrer).hostname.replace(/^www\./, "");
+        source = host && host !== window.location.hostname.replace(/^www\./, "") ? "referral" : "direct";
+      } catch (error) {
+        source = "referral";
+      }
+    }
+    return {
+      source,
+      utm_source: attr.utm_source || "",
+      utm_medium: attr.utm_medium || "",
+      utm_campaign: attr.utm_campaign || "",
+      utm_term: attr.utm_term || "",
+      utm_content: attr.utm_content || "",
+      landing_page: attr.landing_page || `${window.location.pathname}${window.location.search}`,
+      referrer: attr.referrer || "",
+    };
+  }
+
+  function trackingConfigured() {
+    return !!(trackingSettings.ga4 || trackingSettings.adsId);
+  }
+
+  function loadGoogleTags() {
+    if (window.__mtTagsLoaded || !trackingConfigured()) return;
+    window.__mtTagsLoaded = true;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function gtag() {
+      window.dataLayer.push(arguments);
+    };
+    window.gtag("js", new Date());
+    if (trackingSettings.ga4) {
+      window.gtag("config", trackingSettings.ga4, { anonymize_ip: true });
+    }
+    if (trackingSettings.adsId) {
+      window.gtag("config", trackingSettings.adsId);
+    }
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(
+      trackingSettings.ga4 || trackingSettings.adsId
+    )}`;
+    document.head.appendChild(script);
+  }
+
+  function trackLeadConversion() {
+    if (typeof window.gtag !== "function") return;
+    if (trackingSettings.ga4) {
+      window.gtag("event", "generate_lead", {
+        event_category: "contact",
+        event_label: "contact_form",
+      });
+    }
+    if (trackingSettings.adsId && trackingSettings.adsLabel) {
+      window.gtag("event", "conversion", {
+        send_to: `${trackingSettings.adsId}/${trackingSettings.adsLabel}`,
+      });
+    }
+  }
+
+  function removeConsentBanner() {
+    const banner = document.getElementById("consentBanner");
+    if (banner) banner.remove();
+  }
+
+  function showConsentBanner() {
+    if (!trackingConfigured() || readConsent() || document.getElementById("consentBanner")) return;
+    const banner = document.createElement("div");
+    banner.id = "consentBanner";
+    banner.className = "consent-banner";
+    banner.innerHTML = `
+      <div class="consent-inner">
+        <p>We use cookies for analytics and Google Ads measurement so we can improve Maraki Tech and measure campaigns. See our <a href="/privacy">Privacy Policy</a>.</p>
+        <div class="consent-actions">
+          <button type="button" class="btn btn-secondary" data-consent="denied">Essential only</button>
+          <button type="button" class="btn btn-primary" data-consent="accepted">Accept</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(banner);
+    banner.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-consent]");
+      if (!button) return;
+      const value = button.getAttribute("data-consent");
+      writeConsent(value);
+      removeConsentBanner();
+      if (value === "accepted") loadGoogleTags();
+    });
+  }
+
+  function setupTracking(s) {
+    trackingSettings = {
+      ga4: String(s.ga4_measurement_id || "").trim(),
+      adsId: String(s.google_ads_id || "").trim(),
+      adsLabel: String(s.google_ads_conversion_label || "").trim(),
+    };
+    captureAttribution();
+    const consent = readConsent();
+    if (consent === "accepted") loadGoogleTags();
+    else showConsentBanner();
   }
 
   function setupReveal() {
@@ -927,13 +1175,18 @@
     status.className = "form-status";
     status.textContent = "";
 
+    const attr = attributionPayload();
     const payload = {
       name: form.name.value,
       email: form.email.value,
       company: form.company.value,
+      phone: form.phone ? form.phone.value : "",
+      country: form.country.value,
+      city: form.city.value,
       service: form.service.value,
       message: form.message.value,
       company_website: form.company_website.value,
+      ...attr,
     };
 
     try {
@@ -945,6 +1198,7 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Could not send the message.");
       form.reset();
+      trackLeadConversion();
       button.textContent = "Message Sent ✓";
       status.className = "form-status ok";
       status.textContent = "Thanks. We'll get back to you within 24 hours.";

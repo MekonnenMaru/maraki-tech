@@ -453,118 +453,152 @@
       z-index: 3;
     }
 
-    .orbit-system {
+    .hero-clock {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: min(54%, 280px);
-      aspect-ratio: 1;
+      width: min(64%, 360px);
       transform: translate(-50%, -50%);
       z-index: 4;
+      display: grid;
+      gap: 14px;
+      justify-items: center;
       pointer-events: none;
     }
 
-    .orbit-ring {
-      position: absolute;
-      inset: 0;
+    .clock-face {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
       border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(8, 16, 12, 0.18), rgba(5, 8, 6, 0.72) 62%, rgba(5, 8, 6, 0.88) 100%);
+      backdrop-filter: blur(8px);
+      box-shadow:
+        0 0 0 1px rgba(43, 187, 173, 0.28),
+        0 20px 50px rgba(0, 0, 0, 0.35),
+        inset 0 0 40px rgba(24, 201, 100, 0.08);
     }
 
-    .orbit-ring-outer {
-      border: 1.5px solid rgba(43, 187, 173, 0.55);
-      box-shadow: 0 0 24px rgba(43, 187, 173, 0.18);
-      animation: orbitSpin 14s linear infinite;
+    .clock-ring {
+      position: absolute;
+      inset: 8%;
+      border-radius: 50%;
+      border: 1px solid rgba(43, 187, 173, 0.35);
     }
 
-    .orbit-ring-inner {
+    .clock-ring.soft {
       inset: 18%;
-      border: 1px dashed rgba(255, 255, 255, 0.18);
-      animation: orbitSpinReverse 22s linear infinite;
+      border-style: dashed;
+      border-color: rgba(255, 255, 255, 0.12);
     }
 
-    .meteor {
+    .clock-tick {
       position: absolute;
       inset: 0;
-      animation: orbitSpin 14s linear infinite;
+      transform: rotate(calc(var(--i) * 6deg));
     }
 
-    .meteor-dot {
-      position: absolute;
-      top: -7px;
-      left: 50%;
-      width: 14px;
-      height: 14px;
-      margin-left: -7px;
-      background: #9ff5d0;
-      border-radius: 50%;
-      z-index: 2;
-      box-shadow: 0 0 18px rgba(43, 187, 173, 0.9), 0 0 36px rgba(24, 201, 100, 0.45);
-      animation: meteorPulse 2.2s ease-in-out infinite;
-    }
-
-    .meteor-tail {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      width: 3px;
-      height: 42%;
-      margin-left: -1.5px;
-      background: linear-gradient(to bottom, rgba(43, 187, 173, 0.85), transparent);
-      border-radius: 100px;
-      filter: blur(0.4px);
-      transform-origin: top center;
-    }
-
-    .meteor-tail::after {
+    .clock-tick::before {
       content: "";
       position: absolute;
-      top: 0;
+      top: 5%;
       left: 50%;
-      width: 14px;
-      height: 70%;
-      margin-left: -7px;
-      background: linear-gradient(to bottom, rgba(43, 187, 173, 0.28), transparent);
-      filter: blur(6px);
+      width: 1px;
+      height: 3.5%;
+      margin-left: -0.5px;
+      border-radius: 100px;
+      background: rgba(255, 255, 255, 0.18);
     }
 
-    .core-ring {
-      width: 28%;
-      height: 28%;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 50%;
+    .clock-tick.major::before {
+      width: 2px;
+      height: 7%;
+      margin-left: -1px;
+      background: var(--accent-light);
+      box-shadow: 0 0 10px rgba(24, 201, 100, 0.45);
+    }
+
+    .clock-hand {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      animation: coreBreath 4.5s ease-in-out infinite;
+      transform-origin: 50% 100%;
+      border-radius: 100px;
+      will-change: transform;
     }
 
-    .core-dot {
+    .clock-hand.hour {
+      width: 5px;
+      height: 24%;
+      margin-top: -24%;
+      background: linear-gradient(to top, #d8ffe7, #ffffff);
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+    }
+
+    .clock-hand.minute {
+      width: 3px;
+      height: 34%;
+      margin-top: -34%;
+      background: linear-gradient(to top, rgba(43, 187, 173, 0.4), #9ff5d0);
+      box-shadow: 0 0 14px rgba(43, 187, 173, 0.35);
+    }
+
+    .clock-hand.second {
+      width: 2px;
+      height: 40%;
+      margin-top: -40%;
+      background: linear-gradient(to top, transparent 8%, rgba(24, 201, 100, 0.15), var(--accent-light));
+    }
+
+    .clock-second-tip {
+      position: absolute;
+      top: -5px;
+      left: 50%;
       width: 10px;
       height: 10px;
+      margin-left: -5px;
       border-radius: 50%;
+      background: #9ff5d0;
+      box-shadow: 0 0 16px rgba(43, 187, 173, 0.95), 0 0 28px rgba(24, 201, 100, 0.5);
+    }
+
+    .clock-hub {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      background: var(--accent-light);
-      box-shadow: 0 0 20px rgba(24, 201, 100, 0.8);
-      animation: meteorPulse 2.2s ease-in-out infinite;
+      width: 12px;
+      height: 12px;
+      margin: -6px 0 0 -6px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(24, 201, 100, 0.35), 0 0 18px rgba(24, 201, 100, 0.7);
+      z-index: 2;
     }
 
-    @keyframes orbitSpin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    .clock-readout {
+      text-align: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(43, 187, 173, 0.22);
+      background: rgba(5, 8, 6, 0.55);
+      backdrop-filter: blur(10px);
     }
 
-    @keyframes orbitSpinReverse {
-      from { transform: rotate(360deg); }
-      to { transform: rotate(0deg); }
+    .clock-time {
+      font-size: clamp(18px, 2.2vw, 26px);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
     }
 
-    @keyframes meteorPulse {
-      0%, 100% { box-shadow: 0 0 16px rgba(43, 187, 173, 0.55), 0 0 32px rgba(24, 201, 100, 0.25); }
-      50% { box-shadow: 0 0 28px rgba(43, 187, 173, 0.95), 0 0 54px rgba(24, 201, 100, 0.5); }
+    .clock-zone {
+      margin-top: 4px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
     }
 
     @keyframes heroGlow {
@@ -582,11 +616,6 @@
       60% { opacity: 1; }
       75% { transform: translateX(120%); opacity: 0.7; }
       100% { transform: translateX(120%); opacity: 0; }
-    }
-
-    @keyframes coreBreath {
-      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; }
-      50% { transform: translate(-50%, -50%) scale(1.12); opacity: 1; }
     }
 
     /* =========================================================
@@ -1689,8 +1718,8 @@
         height: 420px;
       }
 
-      .orbit-system {
-        width: min(48%, 220px);
+      .hero-clock {
+        width: min(58%, 280px);
       }
 
       .services,

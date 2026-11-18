@@ -134,6 +134,26 @@ const GROUPS = [
       field("social_telegram", "Telegram URL", "text", { placeholder: "https://" }),
     ],
   },
+  {
+    id: "tracking",
+    title: "Google Ads & Analytics",
+    intro:
+      "Paste IDs from Google Analytics 4 and Google Ads. Tags load only after a visitor accepts cookies. Leave blank until your Google accounts are ready.",
+    fields: [
+      field("ga4_measurement_id", "GA4 Measurement ID", "text", {
+        placeholder: "G-XXXXXXXXXX",
+        hint: "Admin → Data Streams → Measurement ID.",
+      }),
+      field("google_ads_id", "Google Ads ID", "text", {
+        placeholder: "AW-XXXXXXXXXX",
+        hint: "From Google Ads → Tools → Conversions.",
+      }),
+      field("google_ads_conversion_label", "Ads conversion label", "text", {
+        placeholder: "AbCdEfGhIjKlMnOp",
+        hint: "The label after the slash in send_to (AW-XXXX/label).",
+      }),
+    ],
+  },
 ];
 
 const DEFAULT_SETTINGS = {
@@ -250,6 +270,10 @@ const DEFAULT_SETTINGS = {
   social_linkedin: "",
   social_github: "",
   social_telegram: "",
+
+  ga4_measurement_id: "",
+  google_ads_id: "",
+  google_ads_conversion_label: "",
 };
 
 const keys = GROUPS.flatMap((group) => group.fields.map((item) => item.key));

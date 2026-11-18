@@ -76,13 +76,28 @@ function clientIp(req) {
 }
 
 function presentMessage(row) {
+  const place = [row.city, row.country].filter(Boolean).join(", ");
   return {
     id: row.id,
     name: row.name,
     email: row.email,
-    company: row.company,
-    service: row.service,
+    company: row.company || "",
+    service: row.service || "",
     message: row.message,
+    country: row.country || "",
+    city: row.city || "",
+    phone: row.phone || "",
+    place,
+    source: row.source || "",
+    utm_source: row.utm_source || "",
+    utm_medium: row.utm_medium || "",
+    utm_campaign: row.utm_campaign || "",
+    utm_term: row.utm_term || "",
+    utm_content: row.utm_content || "",
+    landing_page: row.landing_page || "",
+    referrer: row.referrer || "",
+    ip: row.ip || "",
+    user_agent: row.user_agent || "",
     is_read: !!row.is_read,
     created_at: row.created_at,
   };

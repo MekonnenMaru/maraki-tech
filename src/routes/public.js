@@ -11,19 +11,36 @@ router.use((req, res, next) => {
   next();
 });
 
-function cleanMessage(body) {
-  const name = String(body.name || "").trim();
-  const email = String(body.email || "").trim().toLowerCase();
-  const company = String(body.company || "").trim();
-  const service = String(body.service || "").trim();
-  const message = String(body.message || "").trim();
+function clip(value, max) {
+  return String(value || "")
+    .trim()
+    .slice(0, max);
+}
 
-  if (name.length < 2 || name.length > 80) {
+function cleanMessage(body) {
+  const name = clip(body.name, 80);
+  const email = clip(body.email, 160).toLowerCase();
+  const company = clip(body.company, 120);
+  const service = clip(body.service, 120);
+  const message = clip(body.message, 4000);
+  const country = clip(body.country, 80);
+  const city = clip(body.city, 80);
+  const phone = clip(body.phone, 40);
+  const source = clip(body.source, 40).toLowerCase() || "direct";
+  const utm_source = clip(body.utm_source, 120);
+  const utm_medium = clip(body.utm_medium, 120);
+  const utm_campaign = clip(body.utm_campaign, 160);
+  const utm_term = clip(body.utm_term, 160);
+  const utm_content = clip(body.utm_content, 160);
+  const landing_page = clip(body.landing_page, 500);
+  const referrer = clip(body.referrer, 500);
+
+  if (name.length < 2) {
     const error = new Error("Please enter your name.");
     error.status = 400;
     throw error;
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 160) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     const error = new Error("Please enter a valid email.");
     error.status = 400;
     throw error;
@@ -38,17 +55,49 @@ function cleanMessage(body) {
     error.status = 400;
     throw error;
   }
-  if (message.length < 10 || message.length > 4000) {
+  if (message.length < 10) {
     const error = new Error("Tell us a little more about the project (at least a sentence).");
     error.status = 400;
     throw error;
   }
+  if (country.length < 2) {
+    const error = new Error("Please tell us which country you are in.");
+    error.status = 400;
+    throw error;
+  }
 
-  return { name, email, company, service, message };
+  return {
+    name,
+    email,
+    company,
+    service,
+    message,
+    country,
+    city,
+    phone,
+    source,
+    utm_source,
+    utm_medium,
+    utm_campaign,
+    utm_term,
+    utm_content,
+    landing_page,
+    referrer,
+  };
 }
 
 function clientIp(req) {
-  return req.ip || req.socket.remoteAddress || "unknown";
+  const forwarded = String(req.headers["x-forwarded-for"] || "")
+    .split(",")[0]
+    .trim();
+  return forwarded || req.ip || req.socket.remoteAddress || "";
+}
+
+function normalizeIp(ip) {
+  const value = String(ip || "").trim();
+  if (!value) return "";
+  if (value.startsWith("::ffff:")) return value.slice(7);
+  return value.slice(0, 64);
 }
 
 router.get("/health", (req, res) => {
@@ -88,6 +137,8 @@ router.post("/contact", async (req, res, next) => {
     }
 
     const message = cleanMessage(req.body || {});
+    message.ip = normalizeIp(ip);
+    message.user_agent = clip(req.headers["user-agent"], 300);
     await db.addMessage(message);
     res.status(201).json({ ok: true });
   } catch (error) {
