@@ -10,7 +10,7 @@ const { COLLECTIONS, sanitize, present, fail } = require("../content");
 const { limited, strike, clear } = require("../rate-limit");
 const config = require("../config");
 const { siteUrl } = require("../views/html");
-const { privacySections, sectionPreview, SECTION_IDS } = require("../views/privacy");
+const { privacySections, sectionPreview, normalizeStore, SECTION_IDS } = require("../views/privacy");
 
 const router = express.Router();
 const WINDOW = 15 * 60 * 1000;
@@ -284,15 +284,17 @@ router.put("/settings", async (req, res, next) => {
 
 async function privacyState(req) {
   const settings = await db.getSettings();
-  const overrides = await db.getPrivacyOverrides();
+  const store = await db.getPrivacyOverrides();
   const base = siteUrl(req);
-  const sections = privacySections(settings, { base, sessionHours: config.sessionHours }, overrides).map((section) => ({
+  const sections = privacySections(settings, { base, sessionHours: config.sessionHours }, store).map((section) => ({
     id: section.id,
     title: section.title,
     text: section.text,
     defaultTitle: section.defaultTitle,
     defaultText: section.defaultText,
     edited: section.edited,
+    hidden: section.hidden,
+    custom: section.custom,
     hasAuto: !!section.auto,
     preview: sectionPreview(section, settings, base),
     // Short plain-text preview for the list (placeholders filled in, no tables).
@@ -314,40 +316,94 @@ router.get("/privacy", async (req, res, next) => {
   }
 });
 
-// Save edited text for one section.
-router.put("/privacy/sections/:id", async (req, res, next) => {
-  try {
-    const id = req.params.id;
-    if (!SECTION_IDS.includes(id)) fail(404, "Unknown section.");
-    const title = String((req.body && req.body.title) || "").trim();
-    const text = String((req.body && req.body.text) || "").replace(/\r\n/g, "\n").trim();
-    if (title.length > 120) fail(400, "The title is too long (120 characters at most).");
-    if (text.length > 20000) fail(400, "The text is too long (20,000 characters at most).");
-
-    const overrides = await db.getPrivacyOverrides();
-    overrides[id] = { title, text };
-    await db.savePrivacyOverrides(overrides);
-    await db.saveSettings({ privacy_updated: today() });
-    res.json(await privacyState(req));
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Go back to the automatic text for one section.
-router.delete("/privacy/sections/:id", async (req, res, next) => {
-  try {
-    const overrides = await db.getPrivacyOverrides();
-    if (overrides[req.params.id]) {
-      delete overrides[req.params.id];
-      await db.savePrivacyOverrides(overrides);
+// Reads the saved changes, lets `change` modify them, saves, and answers with the new state.
+// Every change moves the policy's "Last updated" date to today.
+function privacyChange(change) {
+  return async (req, res, next) => {
+    try {
+      const store = normalizeStore(await db.getPrivacyOverrides());
+      await change(store, req);
+      await db.savePrivacyOverrides(store);
       await db.saveSettings({ privacy_updated: today() });
+      res.json(await privacyState(req));
+    } catch (error) {
+      next(error);
     }
-    res.json(await privacyState(req));
-  } catch (error) {
-    next(error);
+  };
+}
+
+function readSectionInput(body) {
+  const title = String((body && body.title) || "").trim();
+  const text = String((body && body.text) || "").replace(/\r\n/g, "\n").trim();
+  if (title.length > 120) fail(400, "The title is too long (120 characters at most).");
+  if (text.length > 20000) fail(400, "The text is too long (20,000 characters at most).");
+  return { title, text };
+}
+
+const findCustom = (store, id) => store.custom.find((item) => item.id === id);
+
+// Built-in section id or one of your own sections — otherwise 404.
+function checkSection(store, id) {
+  if (!SECTION_IDS.includes(id) && !findCustom(store, id)) fail(404, "Unknown section.");
+}
+
+// Add your own section.
+router.post("/privacy/sections", privacyChange((store, req) => {
+  const { title, text } = readSectionInput(req.body);
+  if (!title) fail(400, "Give the section a title.");
+  if (store.custom.length >= 30) fail(400, "You can add up to 30 sections.");
+  store.custom.push({ id: `custom-${crypto.randomBytes(4).toString("hex")}`, title, text, hidden: false });
+}));
+
+// Edit the title and text of a section.
+router.put("/privacy/sections/:id", privacyChange((store, req) => {
+  const id = req.params.id;
+  checkSection(store, id);
+  const { title, text } = readSectionInput(req.body);
+  const own = findCustom(store, id);
+  if (own) {
+    if (!title) fail(400, "Give the section a title.");
+    Object.assign(own, { title, text });
+  } else {
+    store.sections[id] = { ...store.sections[id], title, text };
   }
-});
+}));
+
+// Hide or show a section on the public page: { hidden: true | false }.
+router.patch("/privacy/sections/:id", privacyChange((store, req) => {
+  const id = req.params.id;
+  checkSection(store, id);
+  const hidden = !!(req.body && req.body.hidden === true);
+  const own = findCustom(store, id);
+  if (own) own.hidden = hidden;
+  else store.sections[id] = { ...store.sections[id], hidden };
+}));
+
+// Built-in section: back to the automatic title and text (stays hidden if it was hidden).
+router.post("/privacy/sections/:id/reset", privacyChange((store, req) => {
+  const id = req.params.id;
+  if (!SECTION_IDS.includes(id)) fail(400, "Only built-in sections can be reset.");
+  const hidden = !!store.sections[id]?.hidden;
+  if (hidden) store.sections[id] = { hidden: true };
+  else delete store.sections[id];
+}));
+
+// Delete one of your own sections. Built-in sections can only be hidden.
+router.delete("/privacy/sections/:id", privacyChange((store, req) => {
+  const id = req.params.id;
+  if (SECTION_IDS.includes(id)) fail(400, "Built-in sections can't be deleted. Hide it instead.");
+  if (!findCustom(store, id)) fail(404, "Unknown section.");
+  store.custom = store.custom.filter((item) => item.id !== id);
+  store.order = store.order.filter((other) => other !== id);
+}));
+
+// New order of the sections: { ids: ["summary", "who", ...] }.
+router.put("/privacy/order", privacyChange((store, req) => {
+  const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.map(String) : [];
+  if (!ids.length) fail(400, "Missing the new order.");
+  ids.forEach((id) => checkSection(store, id));
+  store.order = ids;
+}));
 
 router.post("/upload", (req, res, next) => {
   upload.single("image")(req, res, (error) => {

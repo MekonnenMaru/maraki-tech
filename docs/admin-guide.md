@@ -50,16 +50,29 @@ Google IDs are checked when you save. A wrong format shows an error and nothing 
 
 Menu → **Privacy policy**. This is the full text of your public page `https://your-domain/privacy`.
 
-**Company details** (top card): newsletter switch, legal company name, minimum age, privacy email,
-how long you keep messages, and an optional extra section. Click **Save details**.
+**Company details** (top card): newsletter switch, legal company name, minimum age, privacy email
+and how long you keep messages. Click **Save details**.
 
 **Sections** (list below): every part of the policy, in page order.
 
-- Click a section (or ✏️) to **edit** its title and text, then **Save section**.
-- A green **Automatic** label means the text is written for you and updates itself when your settings change
+| Button | What it does |
+| --- | --- |
+| **Add section** | Adds your own section (title + text). It appears before “Contact us about privacy”. |
+| Click a row / ✏️ | **Edit** the title and text, then **Save section** |
+| 👁 | **Hide** the section from the public page (or show it again). Hidden rows show a *Hidden* label and no number. |
+| ⌃ ⌄ | **Move** the section up or down. “In short” always stays at the top. |
+| ↺ | **Reset** a built-in section you edited back to the automatic text |
+| 🗑 | **Delete** one of your own sections (asks first; can't be undone) |
+
+Labels:
+
+- **Automatic** (green): written for you, updates itself when your settings change
   (for example when you add a Google ID, the Google parts appear on their own).
-- An orange **Edited** label means you changed it. It stays exactly as you wrote it.
-- **Reset** (↺) brings back the automatic text.
+- **Edited** (orange): a built-in section you changed. It stays exactly as you wrote it.
+- **Your section**: a section you added.
+
+Built-in sections can't be deleted, because the website writes them for you. **Hide** them instead;
+you can always show them again.
 
 Some parts are always automatic and can't be edited, so they are never wrong:
 your email/phone/location (from Site settings → Contact details) and the cookie table.

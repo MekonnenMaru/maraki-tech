@@ -298,20 +298,76 @@ function defaultSections(s, { base, sessionHours }) {
   return sections.filter(Boolean);
 }
 
-// Sections with any dashboard edits applied.
-// overrides = { sectionId: { title, text } } (from the "privacy_overrides" setting)
-function privacySections(s, opts, overrides = {}) {
-  return defaultSections(s, opts).map((section) => {
-    const edit = overrides[section.id];
+/* ---------- Dashboard changes: edits, hidden, own sections, order ---------- */
+//
+// Saved in the database (setting "privacy_overrides") as:
+// {
+//   sections: { who: { title, text, hidden }, ... },   // changes to built-in sections
+//   custom:   [ { id: "custom-1a2b3c", title, text, hidden }, ... ],  // sections you added
+//   order:    [ "summary", "who", "custom-1a2b3c", ... ]              // your order (optional)
+// }
+
+// Accepts the saved value (also the older format { who: { title, text } }) and cleans it up.
+function normalizeStore(raw) {
+  const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const isNewFormat = "sections" in value || "custom" in value || "order" in value;
+  return {
+    sections: (isNewFormat ? value.sections : value) || {},
+    custom: Array.isArray(value.custom) ? value.custom.filter((item) => item && /^custom-[a-z0-9]{4,20}$/.test(item.id)) : [],
+    order: Array.isArray(value.order) ? value.order.filter((id) => typeof id === "string") : [],
+  };
+}
+
+// Puts sections in the saved order. Sections that are not in the saved order
+// (for example a Google section that just appeared) go after their usual neighbour.
+function applyOrder(items, order) {
+  if (!order.length) return items;
+  const result = items.filter((item) => order.includes(item.id)).sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  items.forEach((item, index) => {
+    if (order.includes(item.id)) return;
+    const before = items.slice(0, index).reverse().find((other) => result.includes(other));
+    result.splice(before ? result.indexOf(before) + 1 : 0, 0, item);
+  });
+  // "In short" always stays at the top.
+  const summary = result.findIndex((item) => item.id === "summary");
+  if (summary > 0) result.unshift(...result.splice(summary, 1));
+  return result;
+}
+
+// All sections (including hidden ones) with dashboard changes applied, in page order.
+function privacySections(s, opts, rawStore = {}) {
+  const store = normalizeStore(rawStore);
+
+  const builtIn = defaultSections(s, opts).map((section) => {
+    const change = store.sections[section.id] || {};
+    const hasText = typeof change.text === "string";
     return {
       ...section,
       defaultTitle: section.title,
       defaultText: section.text,
-      title: edit?.title?.trim() || section.title,
-      text: edit && typeof edit.text === "string" ? edit.text : section.text,
-      edited: !!edit,
+      title: String(change.title || "").trim() || section.title,
+      text: hasText ? change.text : section.text,
+      edited: hasText || !!String(change.title || "").trim(),
+      hidden: !!change.hidden,
+      custom: false,
     };
   });
+
+  const own = store.custom.map((item) => ({
+    id: item.id,
+    title: String(item.title || "").trim() || "Untitled section",
+    text: String(item.text || ""),
+    defaultTitle: "",
+    defaultText: "",
+    edited: true,
+    hidden: !!item.hidden,
+    custom: true,
+  }));
+
+  // Your own sections go just before "Contact us about privacy" unless you moved them.
+  const contactAt = builtIn.findIndex((section) => section.id === "contact");
+  const all = contactAt >= 0 ? [...builtIn.slice(0, contactAt), ...own, ...builtIn.slice(contactAt)] : [...builtIn, ...own];
+  return applyOrder(all, store.order);
 }
 
 // HTML preview of one section's text (used by the dashboard).
@@ -325,7 +381,7 @@ function privacyPage(s, { base, sessionHours, overrides = {} }) {
   const values = placeholders(s, base);
   const company = esc(values.company);
   const brand = esc(s.brand_name || "MARAKI");
-  const sections = privacySections(s, { base, sessionHours }, overrides);
+  const sections = privacySections(s, { base, sessionHours }, overrides).filter((section) => !section.hidden);
   const summary = sections.find((section) => section.id === "summary");
   const numbered = sections.filter((section) => section.id !== "summary");
 
@@ -399,4 +455,4 @@ function privacyPage(s, { base, sessionHours, overrides = {} }) {
 </html>`;
 }
 
-module.exports = { privacyPage, privacySections, sectionPreview, SECTION_IDS };
+module.exports = { privacyPage, privacySections, sectionPreview, normalizeStore, SECTION_IDS };

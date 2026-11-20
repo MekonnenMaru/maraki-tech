@@ -167,6 +167,7 @@ html[data-theme="light"] .logo-mark .ring { border-color: #0a8a42; }
 }
 .chip-green { background: var(--brand-soft); color: var(--brand); }
 .chip-warn { background: var(--warn-soft); color: var(--warn); }
+.chip-muted { background: transparent; border: 1px dashed var(--line-strong); }
 
 .badge {
   margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px;
