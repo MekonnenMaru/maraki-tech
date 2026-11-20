@@ -15,6 +15,7 @@ export function ctaHtml(s) {
   `;
 }
 
+// A footer column. Link names reuse your menu and section names (no separate copies).
 function linkColumn(title, links) {
   const visible = links.filter((link) => link.show && link.label);
   if (!visible.length) return "";
@@ -52,21 +53,21 @@ export function footerHtml(s, show, social) {
         ${s.footer_blurb ? `<p>${esc(s.footer_blurb)}</p>` : ""}
         ${socialLinks(social)}
       </div>
-      ${linkColumn("Product", [
+      ${linkColumn(s.footer_col_product, [
         { show: show.solutions, href: "#solutions", label: s.nav_solutions },
         { show: show.productsArea, href: "#products", label: s.nav_products },
         { show: show.pricing, href: "#pricing", label: s.nav_pricing },
-        { show: show.tech, href: "#technology", label: "Technology" },
+        { show: show.tech, href: "#technology", label: s.tech_label },
       ])}
-      ${linkColumn("Company", [
+      ${linkColumn(s.footer_col_company, [
         { show: show.team, href: "#developers", label: s.nav_team },
         { show: show.process, href: "#process", label: s.nav_process },
-        { show: show.testimonials, href: "#testimonials", label: "Testimonials" },
-        { show: show.faq, href: "#faq", label: "FAQ" },
+        { show: show.testimonials, href: "#testimonials", label: s.testimonials_label },
+        { show: show.faq, href: "#faq", label: s.faq_label },
       ])}
-      ${linkColumn("Contact", [
+      ${linkColumn(s.footer_col_contact, [
         { show: !!s.email, href: `mailto:${s.email}`, label: s.email },
-        { show: show.contact, href: "#contact", label: "Get a Quote" },
+        { show: show.contact, href: "#contact", label: s.nav_cta },
         { show: true, href: "/privacy", label: "Privacy" },
       ])}
     </div>

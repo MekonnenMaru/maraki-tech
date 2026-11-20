@@ -6,6 +6,8 @@
 //  3. UTM tags and the Google click ID (gclid) from the ad link are remembered for the visit
 //     and sent along with the contact form, so each lead shows where it came from.
 
+import { esc } from "../lib/html.js";
+
 const CONSENT_KEY = "mt_consent";
 const ATTRIBUTION_KEY = "mt_attr";
 const URL_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "gbraid", "wbraid"];
@@ -132,7 +134,8 @@ function trackContactClicks() {
 
 /* ---------- Cookie banner ---------- */
 
-function showCookieBanner() {
+// Texts come from Site settings → Cookie banner.
+function showCookieBanner(s) {
   if (document.getElementById("consentBanner")) return;
 
   const banner = document.createElement("div");
@@ -140,10 +143,10 @@ function showCookieBanner() {
   banner.className = "consent-banner";
   banner.innerHTML = `
     <div class="consent-inner">
-      <p>We use cookies for analytics and advertising, so we can improve Maraki Tech and measure our campaigns. See our <a href="/privacy">Privacy Policy</a>.</p>
+      <p>${esc(s.consent_text || "")} See our <a href="/privacy">Privacy Policy</a>.</p>
       <div class="consent-actions">
-        <button type="button" class="btn btn-secondary" data-consent="denied">Essential only</button>
-        <button type="button" class="btn btn-primary" data-consent="accepted">Accept</button>
+        <button type="button" class="btn btn-secondary" data-consent="denied">${esc(s.consent_decline || "Essential only")}</button>
+        <button type="button" class="btn btn-primary" data-consent="accepted">${esc(s.consent_accept || "Accept")}</button>
       </div>
     </div>
   `;
@@ -178,5 +181,5 @@ export function startTracking(s) {
   if (!ids.ga4 && !ids.adsId) return; // nothing configured yet → no banner
   const consent = read(localStorage, CONSENT_KEY);
   if (consent === "accepted") loadGoogleTags();
-  else if (!consent) showCookieBanner();
+  else if (!consent) showCookieBanner(s);
 }

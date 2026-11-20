@@ -14,6 +14,7 @@ export const MENU = [
     items: [
       ["content", "Site settings", "settings"],
       ["privacy", "Privacy policy", "shield"],
+      ["socials", "Social links", "share"],
       ["stats", "Stats", "chart"],
       ["services", "Services", "layers"],
       ["products", "Products", "box"],

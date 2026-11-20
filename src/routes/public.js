@@ -82,11 +82,14 @@ router.get("/content", async (req, res, next) => {
     }
 
     const settings = await db.getSettings();
-    const payload = { settings, social: socialLinks(settings) };
+    const payload = { settings };
     for (const [name, spec] of Object.entries(COLLECTIONS)) {
       const rows = await db.listRows(spec.table, { visibleOnly: true });
       payload[name] = rows.map((row) => present(name, row));
     }
+    // Finished footer links (WhatsApp may need the phone number from settings).
+    payload.social = socialLinks(payload.socials, settings);
+    delete payload.socials;
     res.json(payload);
   } catch (error) {
     next(error);

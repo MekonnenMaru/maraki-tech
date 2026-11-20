@@ -127,7 +127,7 @@ function checklist(s) {
 /* ---------- Content shortcuts ---------- */
 
 function shortcuts(counts) {
-  const ids = ["services", "products", "stats", "process", "faqs", "technologies", "team", "testimonials", "pricing", "apps"];
+  const ids = ["services", "products", "stats", "process", "faqs", "technologies", "team", "testimonials", "pricing", "socials", "apps"];
   return `
     <section class="card">
       <div class="card-head"><h3>Website content</h3>

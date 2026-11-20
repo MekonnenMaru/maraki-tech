@@ -22,6 +22,7 @@ async function init() {
   await schema.renameOldSettings();
   await seed(connection);
   await schema.addMissingApps();
+  await schema.addDefaultSocialLinks();
   await schema.createFirstAdmin();
   ready = true;
 }

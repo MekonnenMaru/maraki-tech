@@ -13,6 +13,7 @@ Changes appear on the website after a refresh. You don't need any code.
 | **Inbox** | Messages from the contact form |
 | **Site settings** | All texts, links, images, contact details, section on/off switches, Google IDs |
 | **Privacy policy** | The full text of your Privacy Policy page, section by section |
+| **Social links** | The social media icons in the footer (one row per network) |
 | **Stats, Services, Products, Pricing** | The cards on the page |
 | **Process, Team, Testimonials, FAQ, Technology** | More sections of the page |
 | **Entertainment** | Bingo, Keno and Spin apps (keep hidden while advertising) |
@@ -31,20 +32,38 @@ The settings are in tabs:
 | **Hero** | The first screen: headline, text, buttons, image |
 | **Navigation** | Menu labels |
 | **Section headings** | The small label, title and text above each section |
-| **Contact details** | Email, phone, location shown by the form and in the footer |
+| **Contact** | Email, phone (also used for WhatsApp), location, the text beside the form, the form button and the “message sent” text |
 | **Call to action** | The banner above the footer |
-| **Footer and social** | Footer text, one social media username (default `marakitech`) and an on/off switch for each network: Facebook, Instagram, TikTok, YouTube, LinkedIn, X, Telegram, WhatsApp (uses your phone number), GitHub |
+| **Footer** | Short description and the three column titles. Footer links reuse your menu and section names. |
+| **Cookie banner** | Banner text and button names (the banner only shows when a Google ID is filled in) |
 | **Google Ads, AdSense & Analytics** | IDs from Google. See the guides in this folder. |
 
 **Green words in titles:** write `{highlight}` in the title where the green words go,
 and put the green words in the *highlight* box.
 Example: title `Technology {highlight} business forward.` + highlight `that moves`.
 
+**Your details inside any text:** write `{company}`, `{email}`, `{phone}` or `{location}` in any text on the site
+(for example an FAQ answer “Email us at {email}”). It's replaced with your current Site settings,
+so when your email changes, every text changes with it.
+
 Click **Save changes** at the bottom. The bar says *Unsaved changes* until you save.
 
 Google IDs are checked when you save. A wrong format shows an error and nothing is saved.
 
 ---
+
+## Social links
+
+Menu → **Social links**. One row per network; they appear as icons in the footer, in this order.
+
+| Column | What to type |
+| --- | --- |
+| **Platform** | Facebook, Instagram, TikTok, YouTube, LinkedIn, X, Telegram, WhatsApp, GitHub — or **Other link** for any other website |
+| **Username or link** | Just the username (e.g. `marakitech`) and the link is made for you. Each network can have a different username. You can also paste a full link (`https://…`). **Other link** always needs a full link. **WhatsApp**: leave empty to use the phone from Site settings → Contact, or type another number with country code. |
+
+Use the switch to show/hide a network, the arrows to change the order, and 🗑 to delete it.
+At the start every network uses `marakitech` — **check each one really is your account**, and switch off
+the ones you don't use.
 
 ## Privacy policy
 
@@ -102,12 +121,12 @@ Proclamation No. 1321/2024; EU/UK clients: GDPR). Make their changes directly in
 
 ---
 
-## Lists (Services, FAQ, Team, …)
+## Lists (Services, FAQ, Team, Social links, …)
 
 - **Add** with the green button at the top right.
 - **Click a row** to edit it.
 - **↑ ↓** change the order on the website.
-- **Visible on the site** switch: hide an item without deleting it.
+- The **on/off switch** in each row shows or hides an item on the website without deleting it.
 - **Images:** JPG, PNG, WebP or GIF up to **2 MB**. **Videos:** MP4 or WebM up to **40 MB**, or a YouTube link.
 
 ---

@@ -43,7 +43,7 @@ export function contactHtml(s, services) {
           ${detailRow("◎", "Location", s.location, "")}
         </div>
 
-        <form class="contact-form reveal" id="contactForm">
+        <form class="contact-form reveal" id="contactForm" data-success="${esc(s.form_success || "Thanks! Your message has been sent.")}">
           <!-- Hidden trap field: real people never fill it, spam bots do. -->
           <div class="hp" aria-hidden="true">
             <label for="company_website">Website</label>
@@ -76,7 +76,7 @@ export function contactHtml(s, services) {
             <textarea id="message" name="message" placeholder="Tell us about your project..." required maxlength="4000"></textarea>
           </div>
 
-          <button type="submit" class="form-submit">Send Message →</button>
+          <button type="submit" class="form-submit">${esc(s.form_button || "Send Message →")}</button>
           <p class="form-status" id="formStatus" role="status"></p>
           <p class="form-privacy">By sending, you agree to our <a href="/privacy">Privacy Policy</a>.</p>
         </form>
@@ -133,7 +133,7 @@ export async function sendContactForm(form) {
     form.reset();
     trackLead();
     setButton("Message Sent ✓", { disabled: true });
-    showStatus("ok", "Thanks! Your message has been sent."); // the reply time is promised once, in the contact text
+    showStatus("ok", form.dataset.success); // text from Site settings → Contact
     setTimeout(done, 2200);
   } catch (error) {
     done();

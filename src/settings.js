@@ -1,5 +1,3 @@
-const { NETWORKS } = require("./social");
-
 function field(key, label, type = "text", extra = {}) {
   return { key, label, type, ...extra };
 }
@@ -103,14 +101,16 @@ const GROUPS = [
   },
   {
     id: "contact",
-    title: "Contact details",
-    intro: "Shown beside the contact form and in the footer.",
+    title: "Contact",
+    intro: "Your contact details (used everywhere on the site) and the contact form texts.",
     fields: [
-      field("contact_aside_title", "Aside title"),
-      field("contact_aside_text", "Aside text", "textarea"),
       field("email", "Email"),
-      field("phone", "Phone"),
+      field("phone", "Phone", "text", { hint: "Also used for the WhatsApp link." }),
       field("location", "Location"),
+      field("contact_aside_title", "Text beside the form: title"),
+      field("contact_aside_text", "Text beside the form", "textarea"),
+      field("form_button", "Form button"),
+      field("form_success", "Message after sending", "text", { hint: "Shown when a message was sent." }),
     ],
   },
   {
@@ -129,15 +129,23 @@ const GROUPS = [
   },
   {
     id: "footer",
-    title: "Footer and social",
-    intro: "Social links are made from one username. Switch off any network you don’t use.",
+    title: "Footer",
+    intro: "Social media links are in their own list: menu → Social links. Footer links use your section and menu names.",
     fields: [
       field("footer_blurb", "Short description", "textarea"),
-      field("social_username", "Social media username", "text", {
-        placeholder: "marakitech",
-        hint: "The same name on every network, e.g. facebook.com/marakitech. WhatsApp uses the phone number from Contact details.",
-      }),
-      ...NETWORKS.map((network) => field(`show_social_${network.id}`, network.label, "toggle")),
+      field("footer_col_product", "Column title 1"),
+      field("footer_col_company", "Column title 2"),
+      field("footer_col_contact", "Column title 3"),
+    ],
+  },
+  {
+    id: "cookies",
+    title: "Cookie banner",
+    intro: "Shown only when a Google Analytics or Google Ads ID is filled in.",
+    fields: [
+      field("consent_text", "Banner text", "textarea"),
+      field("consent_accept", "Accept button"),
+      field("consent_decline", "Decline button"),
     ],
   },
   {
@@ -273,8 +281,16 @@ const DEFAULT_SETTINGS = {
 
   footer_blurb:
     "Technology that moves business forward. We build modern software, payment solutions, and digital products from Ethiopia.",
-  social_username: "marakitech",
-  ...Object.fromEntries(NETWORKS.map((network) => [`show_social_${network.id}`, "1"])),
+  footer_col_product: "Product",
+  footer_col_company: "Company",
+  footer_col_contact: "Contact",
+
+  form_button: "Send Message →",
+  form_success: "Thanks! Your message has been sent.",
+
+  consent_text: "We use cookies for analytics and advertising, so we can improve this website and measure our campaigns.",
+  consent_accept: "Accept",
+  consent_decline: "Essential only",
 
   ga4_measurement_id: "",
   google_ads_id: "",

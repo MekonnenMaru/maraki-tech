@@ -76,9 +76,9 @@ function createApp() {
   app.use(pages.router);
   app.use(express.static(publicDir));
 
-  app.use((req, res) => {
+  app.use((req, res, next) => {
     if (req.path.startsWith("/api")) return res.status(404).json({ error: "Not found." });
-    pages.notFoundPage(req, res);
+    pages.notFoundPage(req, res).catch(next);
   });
   app.use(errorHandler);
 

@@ -11,6 +11,7 @@ import { LISTS, itemTitle, itemSummary } from "../config/lists.js";
 
 let items = [];
 let editingId = null;
+let choices = null; // choices that come from the server, e.g. social platforms (loaded once)
 
 export function isList(id) {
   return Object.prototype.hasOwnProperty.call(LISTS, id);
@@ -22,6 +23,7 @@ const findItem = (element) => items.find((item) => item.id === Number(element.da
 /* ---------- The list ---------- */
 
 function thumb(item) {
+  if (spec().thumb) return spec().thumb(item);
   const src = previewSrc(item.avatar_image || (item.photos || [])[0]);
   if (src) return `<img class="row-thumb" alt="" src="${esc(src)}">`;
   if (item.icon) return `<span class="row-thumb">${esc(item.icon)}</span>`;
@@ -40,12 +42,16 @@ function rowHtml(item, index, last) {
       </button>
       <span class="row-chips">
         ${item.featured ? '<span class="chip chip-green">Featured</span>' : ""}
-        ${item.visible === false ? '<span class="chip chip-warn">Hidden</span>' : '<span class="chip">Visible</span>'}
       </span>
       <span class="row-actions">
         <button class="icon-btn" type="button" data-action="move-item" data-index="${index}" data-step="-1" ${index === 0 ? "disabled" : ""} title="Move up">${icon("up")}</button>
         <button class="icon-btn" type="button" data-action="move-item" data-index="${index}" data-step="1" ${last ? "disabled" : ""} title="Move down">${icon("down")}</button>
         <button class="icon-btn" type="button" data-action="edit-item" data-id="${item.id}" title="Edit">${icon("edit")}</button>
+        ${"visible" in item ? `
+          <button class="row-switch" type="button" role="switch" aria-checked="${item.visible !== false}" data-action="toggle-item" data-id="${item.id}"
+            title="${item.visible === false ? "Hidden — click to show on the site" : "Shown — click to hide from the site"}" aria-label="Show on the site">
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </button>` : ""}
         <button class="icon-btn danger" type="button" data-action="delete-item" data-id="${item.id}" title="Delete">${icon("trash")}</button>
       </span>
     </li>
@@ -54,7 +60,10 @@ function rowHtml(item, index, last) {
 
 export async function renderList(id) {
   const list = LISTS[id];
-  items = await api(`/api/admin/${id}`);
+  const needsChoices = list.fields.some((field) => field.choicesFrom) && !choices;
+  const [rows, schema] = await Promise.all([api(`/api/admin/${id}`), needsChoices ? api("/api/admin/schema") : null]);
+  items = rows;
+  if (schema) choices = schema.choices || {};
 
   view().innerHTML = `
     <div class="page-head">
@@ -97,11 +106,12 @@ function openEditor(item) {
   const toggles = list.fields.filter((field) => field.type === "toggle");
   const others = list.fields.filter((field) => field.type !== "toggle");
   const value = (field) => (item ? item[field.key] : defaultValue(field));
+  const withChoices = (field) => (field.choicesFrom ? { ...field, options: (choices || {})[field.choicesFrom] || [] } : field);
 
   openModal(`
     <form data-form="save-item">
       <h3>${item ? `Edit ${esc(list.noun)}` : `Add ${esc(list.noun)}`}</h3>
-      <div class="form-grid">${others.map((field) => fieldHtml(field, value(field))).join("")}</div>
+      <div class="form-grid">${others.map((field) => fieldHtml(withChoices(field), value(field))).join("")}</div>
       <div class="switch-grid">${toggles.map((field) => fieldHtml(field, value(field))).join("")}</div>
       <p class="form-error" role="alert"></p>
       <div class="modal-actions">
@@ -116,6 +126,14 @@ function openEditor(item) {
 
 registerActions({
   "add-item": () => openEditor(null),
+
+  // On/off switch in a row: show or hide the item on the website.
+  "toggle-item": async (element) => {
+    const item = findItem(element);
+    if (!item) return;
+    await api(`/api/admin/${session.page}/${item.id}`, { method: "PUT", body: { visible: item.visible === false } });
+    await reload();
+  },
   "edit-item": (element) => openEditor(findItem(element)),
 
   "delete-item": (element) => {

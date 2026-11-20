@@ -4,7 +4,7 @@ const path = require("path");
 const express = require("express");
 const db = require("../db");
 const config = require("../config");
-const { esc: escAttr, siteUrl, companyName } = require("../views/html");
+const { esc: escAttr, siteUrl, companyName, logoText } = require("../views/html");
 const { privacyPage } = require("../views/privacy");
 const { socialLinks } = require("../social");
 
@@ -31,9 +31,9 @@ function previewImage(s, base) {
 }
 
 // Business details Google can read (schema.org Organization).
-function organizationJson(s, base) {
-  // Social profiles (WhatsApp is a chat link, not a profile).
-  const socials = socialLinks(s).filter((item) => item.id !== "whatsapp").map((item) => item.url);
+// `social` = finished social links; WhatsApp is a chat link, not a profile, so it's left out.
+function organizationJson(s, base, social) {
+  const socials = social.filter((item) => item.id !== "whatsapp").map((item) => item.url);
   const data = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -75,6 +75,7 @@ function setMeta(html, attribute, value) {
 router.get(["/", "/index.html"], async (req, res, next) => {
   try {
     const s = await db.getSettings();
+    const social = socialLinks(await db.listRows("social_links", { visibleOnly: true }), s);
     const base = siteUrl(req);
     const title = pageTitle(s);
     const description = pageDescription(s);
@@ -86,7 +87,7 @@ router.get(["/", "/index.html"], async (req, res, next) => {
       `<meta property="og:site_name" content="${escAttr(companyName(s))}" />`,
       image && `<meta property="og:image" content="${escAttr(image)}" />`,
       `<meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}" />`,
-      `<script type="application/ld+json">${organizationJson(s, base)}</script>`,
+      `<script type="application/ld+json">${organizationJson(s, base, social)}</script>`,
       ...adsenseTags(s),
     ].filter(Boolean);
 
@@ -95,6 +96,11 @@ router.get(["/", "/index.html"], async (req, res, next) => {
     html = setMeta(html, 'property="og:title"', title);
     html = setMeta(html, 'property="og:description"', description);
     html = html.replace("</head>", () => `  ${extraTags.join("\n  ")}\n</head>`);
+    // Company name in the loading screen, the logo (before the page script runs) and the no-JavaScript note.
+    html = html
+      .replace(/(<div class="loader-word">)[^<]*(<\/div>)/, (m, a, b) => a + escAttr(logoText(s)) + b)
+      .replace(/(id="brandLockup">)[^<]*(<\/a>)/, (m, a, b) => a + escAttr(logoText(s)) + b)
+      .replace(/(Enable JavaScript to view the )[^<]*( site\.)/, (m, a, b) => a + escAttr(companyName(s)) + b);
 
     res.set("Cache-Control", "no-cache").type("html").send(html);
   } catch (error) {
@@ -136,13 +142,14 @@ router.get("/sitemap.xml", (req, res) => {
 `);
 });
 
-function notFoundPage(req, res) {
+async function notFoundPage(req, res) {
+  const company = escAttr(companyName(await db.getSettings().catch(() => ({}))));
   res.status(404).type("html").send(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Page not found — Maraki Tech</title>
+  <title>Page not found — ${company}</title>
   <link rel="icon" href="/favicon.svg">
   <link rel="stylesheet" href="/css/style.css">
 </head>
@@ -151,7 +158,7 @@ function notFoundPage(req, res) {
     <div class="section-label">404</div>
     <h1 class="section-title">Page not found.</h1>
     <p class="section-description" style="margin:16px auto 28px">That address is not part of this site.</p>
-    <a class="btn btn-primary" href="/">Back to Maraki</a>
+    <a class="btn btn-primary" href="/">Back to ${company}</a>
   </div>
 </body>
 </html>`);

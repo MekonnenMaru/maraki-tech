@@ -2,6 +2,7 @@
 // To add a column: add it to the table below AND to UPGRADES so existing databases get it too.
 const bcrypt = require("bcryptjs");
 const { query, execute, count } = require("./connection");
+const { PLATFORMS, DEFAULT_USERNAME } = require("../social");
 
 const ID = "id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY";
 const ORDER_AND_VISIBLE = ["sort_order INT NOT NULL DEFAULT 0", "visible TINYINT(1) NOT NULL DEFAULT 1"];
@@ -80,6 +81,13 @@ const TABLES = {
   ],
 
   technologies: [ID, "name VARCHAR(60) NOT NULL", ...ORDER_AND_VISIBLE],
+
+  social_links: [
+    ID,
+    "platform VARCHAR(20) NOT NULL DEFAULT 'facebook'",
+    "handle VARCHAR(300) NOT NULL DEFAULT ''",
+    ...ORDER_AND_VISIBLE,
+  ],
 
   faqs: [ID, "question VARCHAR(200) NOT NULL", "answer TEXT NOT NULL", ...ORDER_AND_VISIBLE],
 
@@ -181,6 +189,33 @@ async function renameOldSettings() {
   }
 }
 
+// First start with the social links list: one row per platform with the default username.
+// If an older version saved a username or on/off switches in Site settings, those are used.
+// Runs only once (remembered in the settings table), so deleted rows don't come back.
+async function addDefaultSocialLinks() {
+  const done = await count("SELECT COUNT(*) AS count FROM settings WHERE `key` = 'social_links_created'");
+  if (done) return;
+
+  const saved = Object.fromEntries(
+    (await query("SELECT `key`, value FROM settings WHERE `key` LIKE 'social%' OR `key` LIKE 'show_social_%'")).map((row) => [row.key, row.value])
+  );
+  const username = String(saved.social_username || "").replace(/^@/, "").trim() || DEFAULT_USERNAME;
+
+  if (!(await count("SELECT COUNT(*) AS count FROM social_links"))) {
+    let order = 0;
+    for (const platform of PLATFORMS) {
+      if (platform.id === "other") continue;
+      const visible = saved[`show_social_${platform.id}`] === "0" ? 0 : 1;
+      const handle = platform.id === "whatsapp" ? "" : username; // WhatsApp: phone from Contact details
+      await execute(
+        "INSERT INTO social_links (platform, handle, sort_order, visible) VALUES (?, ?, ?, ?)",
+        [platform.id, handle, order++, visible]
+      );
+    }
+  }
+  await execute("INSERT IGNORE INTO settings (`key`, value) VALUES ('social_links_created', '1')");
+}
+
 async function addMissingApps() {
   for (const app of APP_CATALOG) {
     const [name, , , , , edition] = app;
@@ -203,4 +238,4 @@ async function createFirstAdmin() {
   );
 }
 
-module.exports = { createTables, addMissingColumns, renameOldSettings, addMissingApps, createFirstAdmin };
+module.exports = { createTables, addMissingColumns, renameOldSettings, addDefaultSocialLinks, addMissingApps, createFirstAdmin };

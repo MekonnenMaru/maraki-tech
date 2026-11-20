@@ -1,3 +1,7 @@
+const { PLATFORMS, checkSocialRow, linkFor, labelFor: socialLabel } = require("./social");
+
+// The editable lists in the admin. Each has a database table and its fields.
+// Optional `check(row)` runs extra rules before saving.
 const COLLECTIONS = {
   stats: {
     table: "stats",
@@ -100,6 +104,15 @@ const COLLECTIONS = {
       button_text: { type: "string", max: 40, default: "Get Started" },
       visible: { type: "bool", default: true },
     },
+  },
+  socials: {
+    table: "social_links",
+    fields: {
+      platform: { type: "choice", options: PLATFORMS.map((platform) => platform.id), default: "facebook" },
+      handle: { type: "string", max: 300, default: "" },
+      visible: { type: "bool", default: true },
+    },
+    check: checkSocialRow, // username or link must suit the platform (src/social.js)
   },
 };
 
@@ -227,6 +240,8 @@ function sanitize(collectionName, input, { partial = false } = {}) {
   }
 
   if (partial && !Object.keys(output).length) fail(400, "Nothing to update.");
+  if (spec.check && !partial) spec.check(output);
+  if (spec.check && partial && "platform" in output && "handle" in output) spec.check(output);
   return output;
 }
 
@@ -246,6 +261,12 @@ function present(collectionName, row) {
     } else {
       output[key] = row[key] ?? "";
     }
+  }
+
+  // Social links also carry their name and finished link (shown in the admin list).
+  if (collectionName === "socials") {
+    output.label = socialLabel(output);
+    output.url = linkFor(output);
   }
 
   return output;

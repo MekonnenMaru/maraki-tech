@@ -14,6 +14,7 @@ const TABLES = new Set([
   "technologies",
   "faqs",
   "pricing_plans",
+  "social_links",
 ]);
 
 function assertTable(table) {

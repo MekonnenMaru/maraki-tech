@@ -7,7 +7,7 @@
 // To add a new section: create a file in ./sections, import it here,
 // and add one line to the `sections` list in renderPage().
 
-import { esc, logoMark, logoText } from "./lib/html.js";
+import { esc, logoMark, logoText, withPlaceholders } from "./lib/html.js";
 import { visibleSections } from "./lib/visibility.js";
 import { navHtml } from "./sections/nav.js";
 import { heroHtml, startHeroClock } from "./sections/hero.js";
@@ -114,7 +114,7 @@ async function start() {
   try {
     const response = await fetch("/api/content", { headers: { Accept: "application/json" } });
     if (!response.ok) throw new Error("Content request failed");
-    renderPage(await response.json());
+    renderPage(withPlaceholders(await response.json()));
   } catch (error) {
     console.error(error);
     renderError();

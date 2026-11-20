@@ -78,6 +78,21 @@ export function logoText(s) {
   return companyName(s).split(/\s+/)[0].toUpperCase();
 }
 
+// Lets any text on the site use {company}, {email}, {phone} and {location}
+// (e.g. an FAQ answer "Email us at {email}"), so those details are typed only once.
+// Other {words}, like {highlight}, are left alone.
+export function withPlaceholders(data) {
+  const s = data.settings;
+  const values = { company: companyName(s), email: s.email || "", phone: s.phone || "", location: s.location || "" };
+  const fill = (value) => {
+    if (typeof value === "string") return value.replace(/\{(company|email|phone|location)\}/g, (m, key) => values[key]);
+    if (Array.isArray(value)) return value.map(fill);
+    if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, fill(v)]));
+    return value;
+  };
+  return fill(data);
+}
+
 export function logoMark() {
   return '<span class="logo-mark" aria-hidden="true"><span class="ring"></span><span class="dot"></span></span>';
 }

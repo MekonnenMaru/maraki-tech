@@ -2,7 +2,10 @@
 // The server checks the same fields in src/content.js — keep both in sync.
 //
 // Field types: text, int, textarea, lines (one per line), toggle, choice, image, gallery, video.
-// Options: required, wide (full width), placeholder.
+// Options: required, wide (full width), placeholder, hint.
+//   choicesFrom: "name" → the choices are loaded from the server (/api/admin/schema → choices.name).
+//   thumb(item)  → small picture at the start of each row.
+import { socialIcon } from "/js/lib/social-icons.js"; // the same icons as the website footer
 
 const text = (key, label, extra = {}) => ({ key, label, type: "text", ...extra });
 const number = (key, label, extra = {}) => ({ key, label, type: "int", ...extra });
@@ -112,6 +115,23 @@ export const LISTS = {
     noun: "question",
     fields: [text("question", "Question", { required: true, wide: true }), textarea("answer", "Answer", { required: true }), visible],
     summary: (item) => item.answer,
+  },
+  socials: {
+    title: "Social links",
+    icon: "share",
+    intro: "The icons in the footer. Each network can have its own username, or paste a full link. Use “Other link” for any other website.",
+    noun: "link",
+    fields: [
+      { key: "platform", label: "Platform", type: "choice", choicesFrom: "socialPlatforms" }, // list comes from the server (src/social.js)
+      text("handle", "Username or link", {
+        wide: true,
+        placeholder: "marakitech  or  https://…",
+        hint: "Just the name (e.g. marakitech) — the link is made for you. WhatsApp: leave empty to use your phone number from Site settings → Contact.",
+      }),
+      visible,
+    ],
+    summary: (item) => item.url || (item.platform === "whatsapp" ? "Uses the phone number from Site settings → Contact" : ""),
+    thumb: (item) => `<span class="row-thumb">${socialIcon(item.platform)}</span>`,
   },
   apps: {
     title: "Entertainment",
