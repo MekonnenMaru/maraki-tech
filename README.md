@@ -49,7 +49,16 @@ public/
     lib/visibility.js     Decides which sections show
     sections/             One file per part of the page (hero, products, contact...)
     features/             Tracking + cookie banner, animations, menu/scroll/theme
-  admin/                  The admin dashboard (index.html, css, js/admin.js)
+  admin/                  The admin dashboard
+    index.html            Sign-in screen + page frame (sidebar, top bar)
+    css/admin.css         All dashboard styles (numbered sections, phone rules at the end)
+    js/main.js            Starts the dashboard and registers the pages
+    js/config/menu.js     The sidebar menu
+    js/config/lists.js    Every editable list and the fields in its edit form
+    js/core/              Shared parts: server calls, click handling, pop-ups,
+                          form fields + uploads, date filter, layout, icons
+    js/pages/             One file per page: dashboard, messages (inbox),
+                          settings, list (all editable lists), account
   uploads/                Images and videos uploaded in the admin
 ```
 
@@ -63,7 +72,9 @@ public/
 | Change how a section looks                 | `public/js/sections/<section>.js` and the CSS                     |
 | Add a new section to the page              | New file in `public/js/sections/`, then add one line in `main.js` |
 | Add a new editable setting                 | `src/settings.js` (add it to a group AND to `DEFAULT_SETTINGS`)   |
-| Add a field to a list (e.g. FAQ)           | `src/content.js` + a column in `src/db/schema.js`                 |
+| Add a field to a list (e.g. FAQ)           | `src/content.js` + `src/db/schema.js` + `admin/js/config/lists.js` |
+| Add a page to the dashboard                | New file in `admin/js/pages/`, register it in `admin/js/main.js`, add it to `config/menu.js` |
+| Change the dashboard look                  | `public/admin/css/admin.css` (colors are at the top)              |
 | Change what's saved from the contact form  | `src/routes/public.js` + `src/db/messages.js` + `schema.js`       |
 
 ## Google Ads checklist
