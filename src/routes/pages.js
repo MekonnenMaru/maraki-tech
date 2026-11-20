@@ -51,6 +51,23 @@ function organizationJson(s, base) {
   return JSON.stringify(data).split("<").join("\\u003c");
 }
 
+// AdSense publisher ID ("ca-pub-1234…"), or "" when AdSense is off or the ID looks wrong.
+function adsenseId(s) {
+  const id = String(s.adsense_client_id || "").trim().toLowerCase();
+  return /^ca-pub-\d{10,20}$/.test(id) ? id : "";
+}
+
+// Google's site-verification tag + the AdSense script (Auto ads are switched on in AdSense itself).
+// Docs: docs/google-adsense.md
+function adsenseTags(s) {
+  const id = adsenseId(s);
+  if (!id) return [];
+  return [
+    `<meta name="google-adsense-account" content="${id}" />`,
+    `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${id}" crossorigin="anonymous"></script>`,
+  ];
+}
+
 function setMeta(html, attribute, value) {
   const pattern = new RegExp(`(<meta ${attribute} content=")[^"]*(")`);
   return html.replace(pattern, (match, start, end) => start + escAttr(value) + end);
@@ -73,6 +90,7 @@ router.get(["/", "/index.html"], async (req, res, next) => {
       image && `<meta property="og:image" content="${escAttr(image)}" />`,
       `<meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}" />`,
       `<script type="application/ld+json">${organizationJson(s, base)}</script>`,
+      ...adsenseTags(s),
     ].filter(Boolean);
 
     let html = homeTemplate.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${escAttr(title)}</title>`);
@@ -89,6 +107,18 @@ router.get(["/", "/index.html"], async (req, res, next) => {
 
 router.get(["/privacy", "/privacy.html"], (req, res) => {
   res.sendFile(path.join(publicDir, "privacy.html"));
+});
+
+// ads.txt tells ad buyers which ad accounts may sell ads on this site. AdSense needs it.
+// It only exists while an AdSense publisher ID is saved in the admin.
+router.get("/ads.txt", async (req, res, next) => {
+  try {
+    const id = adsenseId(await db.getSettings());
+    if (!id) return res.status(404).type("text/plain").send("No ads are sold on this site.\n");
+    res.type("text/plain").send(`google.com, ${id.replace("ca-", "")}, DIRECT, f08c47fec0942fa0\n`);
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.get("/sitemap.xml", (req, res) => {

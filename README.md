@@ -77,12 +77,20 @@ public/
 | Change the dashboard look                  | `public/admin/css/admin.css` (colors are at the top)              |
 | Change what's saved from the contact form  | `src/routes/public.js` + `src/db/messages.js` + `schema.js`       |
 
-## Google Ads checklist
+## Guides
 
-- [ ] Paste the GA4 ID, Google Ads ID and conversion label in the admin.
-- [ ] Use only real testimonials, team members and numbers. The sample ones are hidden by default.
-- [ ] Use a real phone number and email.
-- [ ] Keep the Entertainment apps (Bingo/Keno/Spin) hidden on the page you advertise.
-      Google restricts gambling ads.
-- [ ] Serve the site over HTTPS on your own domain.
-- [ ] Change the admin password.
+Step-by-step guides are in [docs/](docs/README.md):
+
+- [Going live](docs/going-live.md): domain, HTTPS, pm2, backups
+- [Google AdSense](docs/google-adsense.md): show Google ads on the site and earn money
+- [Google Ads](docs/google-ads.md): advertise Maraki Tech and track leads
+- [Analytics and Search Console](docs/google-analytics.md)
+- [Admin guide](docs/admin-guide.md): using the dashboard
+
+## Google services in the code
+
+| Service | Setting (admin) | Code |
+| --- | --- | --- |
+| GA4 + Google Ads tags, cookie banner, lead tracking | `ga4_measurement_id`, `google_ads_id`, `google_ads_conversion_label` | `public/js/features/tracking.js` |
+| AdSense script, verification tag, `/ads.txt` | `adsense_client_id` | `src/routes/pages.js` |
+| ID format checks on save | all of the above | `src/routes/admin.js` (`ID_FORMATS`) |

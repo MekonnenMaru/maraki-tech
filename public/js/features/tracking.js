@@ -140,7 +140,7 @@ function showCookieBanner() {
   banner.className = "consent-banner";
   banner.innerHTML = `
     <div class="consent-inner">
-      <p>We use cookies for analytics and Google Ads measurement so we can improve Maraki Tech and measure campaigns. See our <a href="/privacy">Privacy Policy</a>.</p>
+      <p>We use cookies for analytics and advertising, so we can improve Maraki Tech and measure our campaigns. See our <a href="/privacy">Privacy Policy</a>.</p>
       <div class="consent-actions">
         <button type="button" class="btn btn-secondary" data-consent="denied">Essential only</button>
         <button type="button" class="btn btn-primary" data-consent="accepted">Accept</button>

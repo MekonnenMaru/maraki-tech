@@ -209,6 +209,19 @@ router.get("/schema", (req, res) => {
   res.json({ groups: GROUPS });
 });
 
+// Google IDs must have the right shape. An empty value switches the service off.
+const ID_FORMATS = {
+  ga4_measurement_id: [/^G-[A-Z0-9]{4,20}$/, "The GA4 ID looks like G-XXXXXXXXXX."],
+  google_ads_id: [/^AW-\d{6,15}$/, "The Google Ads ID looks like AW-123456789."],
+  google_ads_conversion_label: [/^[\w-]{6,40}$/, "The conversion label is the short code after the slash, e.g. AbC-D_efG12."],
+  adsense_client_id: [/^ca-pub-\d{10,20}$/, "The AdSense publisher ID looks like ca-pub-1234567890123456."],
+};
+
+function checkIdFormat(key, value) {
+  const rule = ID_FORMATS[key];
+  if (rule && value && !rule[0].test(value)) fail(400, rule[1]);
+}
+
 router.put("/settings", async (req, res, next) => {
   try {
     const input = req.body;
@@ -222,6 +235,9 @@ router.put("/settings", async (req, res, next) => {
       value = value == null ? "" : String(value).trim();
       if (key.startsWith("show_")) value = value === "1" || value === "true" ? "1" : "0";
       if (value.length > 2000) fail(400, `${key.replace(/_/g, " ")} is too long.`);
+      if (key === "ga4_measurement_id" || key === "google_ads_id") value = value.toUpperCase();
+      if (key === "adsense_client_id") value = value.toLowerCase();
+      checkIdFormat(key, value);
       next[key] = value;
     }
 

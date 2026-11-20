@@ -136,9 +136,9 @@ const GROUPS = [
   },
   {
     id: "tracking",
-    title: "Google Ads & Analytics",
+    title: "Google Ads, AdSense & Analytics",
     intro:
-      "Paste IDs from Google Analytics 4 and Google Ads. Tags load only after a visitor accepts cookies. Leave blank until your Google accounts are ready.",
+      "Paste the IDs from your Google accounts. Leave a box empty to switch that service off. Step-by-step guides: docs/ folder in the project.",
     fields: [
       field("ga4_measurement_id", "GA4 Measurement ID", "text", {
         placeholder: "G-XXXXXXXXXX",
@@ -151,6 +151,10 @@ const GROUPS = [
       field("google_ads_conversion_label", "Ads conversion label", "text", {
         placeholder: "AbCdEfGhIjKlMnOp",
         hint: "The label after the slash in send_to (AW-XXXX/label).",
+      }),
+      field("adsense_client_id", "AdSense publisher ID", "text", {
+        placeholder: "ca-pub-0000000000000000",
+        hint: "Only if you want Google ads SHOWN on this site. AdSense → Account → Account information.",
       }),
     ],
   },
@@ -274,6 +278,7 @@ const DEFAULT_SETTINGS = {
   ga4_measurement_id: "",
   google_ads_id: "",
   google_ads_conversion_label: "",
+  adsense_client_id: "",
 };
 
 const keys = GROUPS.flatMap((group) => group.fields.map((item) => item.key));
