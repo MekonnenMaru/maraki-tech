@@ -258,12 +258,31 @@ input:focus, select:focus, textarea:focus {
     radial-gradient(circle at 0% 100%, rgba(43, 187, 173, 0.1), transparent 40%),
     var(--bg);
 }
+.login-wrap { width: min(420px, 100%); display: grid; gap: 18px; }
 .login-card {
-  width: min(420px, 100%); display: grid; gap: 16px; padding: 32px;
-  border: 1px solid var(--line); border-radius: 22px;
+  display: grid; gap: 18px; padding: 36px 32px 28px;
+  border: 1px solid var(--line); border-radius: 20px;
   background: var(--surface); box-shadow: var(--shadow);
 }
-.login-card h1 { font-size: 1.6rem; margin-top: 8px; }
+.login-head { display: grid; gap: 6px; margin-top: 6px; }
+.login-head h1 { font-size: 1.35rem; font-weight: 750; }
+.login-card .form-error:empty { display: none; }
+.login-notice {
+  padding-top: 16px; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: 0.8rem; line-height: 1.5; text-align: center;
+}
+.login-foot { display: flex; justify-content: space-between; gap: 12px; padding: 0 6px; color: var(--muted); font-size: 0.84rem; }
+.login-foot a { color: var(--muted); text-decoration: none; }
+.login-foot a:hover { color: var(--text); }
+
+.password-input { position: relative; }
+.password-input input { padding-right: 68px; }
+.password-toggle {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  height: 30px; padding: 0 10px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--muted); font-size: 0.8rem; font-weight: 600;
+}
+.password-toggle:hover { background: var(--hover); color: var(--text); }
 
 /* ---------- 5. Layout: sidebar + topbar ---------- */
 

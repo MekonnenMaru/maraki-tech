@@ -108,7 +108,7 @@ router.post("/login", async (req, res, next) => {
   try {
     const ip = clientIp(req);
     if (limited("login", ip, 8, WINDOW)) {
-      return res.status(429).json({ error: "Too many attempts. Try again in a few minutes." });
+      return res.status(429).json({ error: "Too many sign-in attempts. Please wait 15 minutes and try again." });
     }
 
     const username = String((req.body && req.body.username) || "").trim();

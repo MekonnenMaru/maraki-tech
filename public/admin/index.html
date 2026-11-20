@@ -27,18 +27,43 @@
 
   <!-- ===================== Sign in ===================== -->
   <main class="login" id="loginView" hidden>
-    <form class="login-card" data-form="login" id="loginForm">
-      <div class="brand">
-        <span class="logo-mark" aria-hidden="true"><span class="ring"></span><span class="dot"></span></span>
-        <span>MARAKI <small>Admin</small></span>
-      </div>
-      <h1>Welcome back</h1>
-      <p class="muted">Sign in to edit the website and read new leads.</p>
-      <div class="field"><label for="login-user">Username</label><input id="login-user" name="username" autocomplete="username" required /></div>
-      <div class="field"><label for="login-pass">Password</label><input id="login-pass" name="password" type="password" autocomplete="current-password" required /></div>
-      <p class="form-error" id="loginError" role="alert"></p>
-      <button class="btn primary block" type="submit">Sign in</button>
-    </form>
+    <div class="login-wrap">
+      <form class="login-card" data-form="login" id="loginForm">
+        <div class="brand">
+          <span class="logo-mark" aria-hidden="true"><span class="ring"></span><span class="dot"></span></span>
+          <span>MARAKI <small>Tech</small></span>
+        </div>
+
+        <div class="login-head">
+          <h1>Sign in to the admin console</h1>
+          <p class="muted">Manage website content and customer enquiries.</p>
+        </div>
+
+        <div class="field">
+          <label for="login-user">Username</label>
+          <input id="login-user" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+        </div>
+        <div class="field">
+          <label for="login-pass">Password</label>
+          <div class="password-input">
+            <input id="login-pass" name="password" type="password" autocomplete="current-password" required />
+            <button type="button" class="password-toggle" data-action="toggle-password" aria-label="Show password" aria-controls="login-pass">Show</button>
+          </div>
+        </div>
+
+        <p class="form-error" id="loginError" role="alert"></p>
+        <button class="btn primary block" type="submit">Sign in</button>
+
+        <p class="login-notice">
+          Restricted area for authorised Maraki Tech staff. Repeated failed sign-ins are temporarily blocked.
+        </p>
+      </form>
+
+      <footer class="login-foot">
+        <a href="/">← Back to website</a>
+        <span>© <span id="loginYear"></span> Maraki Tech</span>
+      </footer>
+    </div>
   </main>
 
   <!-- ===================== Dashboard ===================== -->
