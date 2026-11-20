@@ -145,7 +145,8 @@ const SECTION_IDS = [
 // Returns the sections for the current settings, with their DEFAULT text.
 // `auto` = HTML that is always added after the text (not editable).
 // `optional: true` = hidden until switched on in the dashboard (only the necessary sections show by default).
-function defaultSections(s, { base, sessionHours }) {
+// `shares` = other services that receive data, e.g. [{ name: "Telegram", purpose: "…" }] from optional features.
+function defaultSections(s, { base, sessionHours, shares = [] }) {
   const on = servicesInUse(s);
   const cookies = on.analytics || on.ads;
   const google = [on.analytics && "Google Analytics", on.ads && "Google Ads", on.adsense && "Google AdSense"].filter(Boolean);
@@ -261,14 +262,15 @@ function defaultSections(s, { base, sessionHours }) {
         "",
         "- **Our hosting provider**, which stores the website and its database on our behalf.",
         google.length && `- **${google.join(", ")}**, as described above.`,
+        ...shares.map((share) => `- **${share.name}**, ${share.purpose}.`),
         "- **Authorities**, only when the law requires it.",
       ].filter((line) => line !== 0 && line !== false).join("\n"),
     },
     {
       id: "transfers",
-      optional: google.length === 0,
+      optional: google.length === 0 && shares.length === 0,
       title: "Information stored outside your country",
-      text: `Our hosting provider${google.length ? " and Google" : ""} may store or process information on servers outside your country${country ? `, including outside ${country}` : ""}. When that happens, we choose providers that protect information with recognised safeguards.`,
+      text: `Our hosting provider${[google.length && "Google", ...shares.map((share) => share.name)].filter(Boolean).map((name, i, all) => (i === all.length - 1 ? " and " : ", ") + name).join("")} may store or process information on servers outside your country${country ? `, including outside ${country}` : ""}. When that happens, we choose providers that protect information with recognised safeguards.`,
     },
     {
       id: "security",
@@ -395,11 +397,11 @@ function sectionPreview(section, s, base) {
 
 /* ---------- Page ---------- */
 
-function privacyPage(s, { base, sessionHours, overrides = {} }) {
+function privacyPage(s, { base, sessionHours, overrides = {}, shares = [] }) {
   const values = placeholders(s, base);
   const company = esc(values.company);
   const brand = brandHtml(s);
-  const sections = privacySections(s, { base, sessionHours }, overrides).filter((section) => !section.hidden);
+  const sections = privacySections(s, { base, sessionHours, shares }, overrides).filter((section) => !section.hidden);
   const summary = sections.find((section) => section.id === "summary");
   const numbered = sections.filter((section) => section.id !== "summary");
 

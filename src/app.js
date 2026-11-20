@@ -9,6 +9,7 @@ const db = require("./db");
 const publicRoutes = require("./routes/public");
 const adminRoutes = require("./routes/admin");
 const pages = require("./routes/pages");
+const telegramBot = require("./telegram-bot"); // standalone feature: src/telegram-bot/
 
 const publicDir = path.join(__dirname, "..", "public");
 
@@ -72,6 +73,7 @@ function createApp() {
   app.use(express.json({ limit: "1mb" }));
   app.use(sessions());
 
+  app.use(telegramBot.router); // Telegram alerts (API + dashboard page)
   app.use("/api/admin", adminRoutes);
   app.use("/api", publicRoutes);
   app.use(pages.router);

@@ -7,6 +7,7 @@ const config = require("../config");
 const { esc: escAttr, siteUrl, companyName, logoText, logoUrl, brandHtml, fillPlaceholders } = require("../views/html");
 const { privacyPage } = require("../views/privacy");
 const { socialLinks } = require("../social");
+const telegramBot = require("../telegram-bot");
 
 const router = express.Router();
 const publicDir = path.join(__dirname, "..", "..", "public");
@@ -121,7 +122,8 @@ router.get(["/", "/index.html"], async (req, res, next) => {
 router.get(["/privacy", "/privacy.html"], async (req, res, next) => {
   try {
     const [settings, overrides] = await Promise.all([db.getSettings(), db.getPrivacyOverrides()]);
-    const html = setFavicon(privacyPage(settings, { base: siteUrl(req), sessionHours: config.sessionHours, overrides }), settings);
+    const shares = await telegramBot.privacyShares(); // Telegram alerts, when switched on
+    const html = setFavicon(privacyPage(settings, { base: siteUrl(req), sessionHours: config.sessionHours, overrides, shares }), settings);
     res.set("Cache-Control", "no-cache").type("html").send(html);
   } catch (error) {
     next(error);

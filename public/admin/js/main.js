@@ -15,6 +15,7 @@ import { renderSettings, renderProfile } from "./pages/settings.js";
 import { renderList, isList } from "./pages/list.js";
 import { renderAccount } from "./pages/account.js";
 import { renderPrivacy } from "./pages/privacy.js";
+import { renderTelegram } from "/telegram-bot/admin-page.js"; // feature in src/telegram-bot/
 import { toast, storage } from "./core/util.js";
 
 registerPage("dashboard", renderDashboard);
@@ -23,6 +24,7 @@ registerPage("content", renderSettings);
 registerPage("profile", renderProfile);
 registerPage("account", renderAccount);
 registerPage("privacy", renderPrivacy);
+registerPage("telegram", renderTelegram);
 registerListPage(renderList, isList);
 
 /* ---------- Sign in / out ---------- */

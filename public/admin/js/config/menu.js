@@ -7,6 +7,7 @@ export const MENU = [
     items: [
       ["dashboard", "Overview", "dashboard"],
       ["messages", "Inbox", "inbox"],
+      ["telegram", "Telegram alerts", "send"], // feature in src/telegram-bot/
     ],
   },
   {

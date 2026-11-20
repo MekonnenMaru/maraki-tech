@@ -49,6 +49,7 @@ src/
   views/
     html.js               Server-side HTML helpers (escaping, site URL)
     privacy.js            Privacy policy text; contact details come from Site settings
+  telegram-bot/            Telegram alerts for new messages (standalone feature, see its README)
   db/
     index.js              One import for all database functions
     connection.js         MySQL pool + query helpers

@@ -11,6 +11,7 @@ Changes appear on the website after a refresh. You don't need any code.
 | --- | --- |
 | **Overview** | Visits, new messages, the *Ready for Google Ads* checklist, latest leads |
 | **Inbox** | Messages from the contact form |
+| **Telegram alerts** | Get a Telegram message for every new contact-form message |
 | **Company profile** | Company name, logo, email, phone, location, time zone — used everywhere |
 | **Site settings** | All texts, links, images, section on/off switches, Google IDs |
 | **Privacy policy** | The full text of your Privacy Policy page, section by section |
@@ -21,6 +22,17 @@ Changes appear on the website after a refresh. You don't need any code.
 | **Password** | Change your password |
 
 ---
+
+## Telegram alerts
+
+Menu → **Telegram alerts**. Get a Telegram message the moment someone sends the contact form.
+
+1. **Bot token**: create a bot with **@BotFather** in Telegram (`/newbot`), paste the token, **Save token**.
+2. **Connect a Telegram account** → **Open in Telegram** → press **Start**. The window closes when it's connected.
+   Do this for everyone who should get alerts (each gets their own one-time link).
+3. **Send test message** to check.
+
+The switch turns alerts on/off. Remove a person with 🗑. Details: `src/telegram-bot/README.md`.
 
 ## Company profile
 

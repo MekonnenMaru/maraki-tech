@@ -14,6 +14,7 @@ const { todayIn } = require("../time");
 const { siteUrl } = require("../views/html");
 const { privacySections, sectionPreview, normalizeStore, SECTION_IDS } = require("../views/privacy");
 const { PLATFORMS } = require("../social");
+const telegramBot = require("../telegram-bot");
 
 const router = express.Router();
 const WINDOW = 15 * 60 * 1000;
@@ -289,7 +290,8 @@ async function privacyState(req) {
   const settings = await db.getSettings();
   const store = await db.getPrivacyOverrides();
   const base = siteUrl(req);
-  const sections = privacySections(settings, { base, sessionHours: config.sessionHours }, store).map((section) => ({
+  const shares = await telegramBot.privacyShares();
+  const sections = privacySections(settings, { base, sessionHours: config.sessionHours, shares }, store).map((section) => ({
     id: section.id,
     title: section.title,
     text: section.text,

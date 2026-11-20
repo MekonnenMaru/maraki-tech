@@ -395,6 +395,15 @@ textarea.long-text { line-height: 1.65; min-height: 280px; }
 .auto-preview tr:last-child td { border-bottom: 0; }
 .auto-preview code { font-size: 0.82rem; }
 
+/* Telegram alerts page */
+.tg-status { font-weight: 600; margin-top: 4px; }
+.tg-status.ok { color: var(--brand); }
+.tg-status.warn { color: var(--warn); }
+.tg-status.danger { color: var(--danger); }
+.tg-waiting { display: flex; align-items: center; gap: 10px; color: var(--muted); margin-top: 14px; }
+.steps { margin: 14px 0; padding-left: 20px; display: grid; gap: 12px; line-height: 1.6; }
+.steps .btn { margin-top: 8px; }
+
 /* Small "How to …" help box */
 .help { margin-top: 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
 .help summary { cursor: pointer; font-weight: 600; color: var(--muted); }

@@ -3,6 +3,8 @@ const db = require("../db");
 const { COLLECTIONS, present, fail } = require("../content");
 const { socialLinks } = require("../social");
 const { VISIT_COOKIE } = require("../storage-names");
+const { siteUrl } = require("../views/html");
+const telegramBot = require("../telegram-bot");
 const { limited, strike } = require("../rate-limit");
 
 const router = express.Router();
@@ -124,6 +126,7 @@ router.post("/contact", async (req, res, next) => {
     message.user_agent = clip(req.headers["user-agent"], 300);
     await db.addMessage(message);
     res.status(201).json({ ok: true });
+    telegramBot.notifyNewMessage(message, { base: siteUrl(req) }); // Telegram alert (after answering the visitor)
   } catch (error) {
     next(error);
   }
