@@ -32,6 +32,14 @@ async function run(handler, element, event) {
   }
 }
 
+// Spinner + disabled state on a submit button while its form is being sent.
+function setLoading(button, loading) {
+  if (!button) return;
+  button.disabled = loading;
+  button.classList.toggle("loading", loading);
+  button.setAttribute("aria-busy", String(loading));
+}
+
 let busy = false;
 
 export function startActions() {
@@ -52,10 +60,13 @@ export function startActions() {
     const handler = submits[form.dataset.form];
     if (!handler) return;
     event.preventDefault();
+    if (form.dataset.sending) return; // already sending: ignore extra clicks / Enter presses
+    form.dataset.sending = "1";
     const button = form.querySelector("[type=submit]");
-    if (button) button.disabled = true;
+    setLoading(button, true);
     await run(handler, form, event);
-    if (button && form.isConnected) button.disabled = false;
+    delete form.dataset.sending;
+    if (form.isConnected) setLoading(button, false);
   });
 
   document.addEventListener("change", (event) => {

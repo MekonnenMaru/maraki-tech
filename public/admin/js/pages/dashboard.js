@@ -175,7 +175,7 @@ export async function renderDashboard() {
     </div>
 
     <div class="grid-2">
-      <section class="card">
+      <section class="card chart-card">
         <div class="card-head">
           <div>
             <h3>Visits</h3>

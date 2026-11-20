@@ -86,7 +86,13 @@ export function contactHtml(s, services) {
   `;
 }
 
+// Stop waiting after this long, so the button never stays stuck on "Sending".
+const SEND_TIMEOUT_MS = 20000;
+
 export async function sendContactForm(form) {
+  if (form.dataset.sending) return; // already sending: ignore double clicks / Enter presses
+  form.dataset.sending = "1";
+
   const button = form.querySelector(".form-submit");
   const status = document.getElementById("formStatus");
   const buttonText = button.textContent;
@@ -96,33 +102,49 @@ export async function sendContactForm(form) {
     status.textContent = text;
   };
 
-  button.disabled = true;
-  button.textContent = "Sending...";
+  // Spinner + disabled button while sending. `done` lets the button work again.
+  const setButton = (text, { loading = false, disabled = false } = {}) => {
+    button.textContent = text;
+    button.disabled = disabled;
+    button.classList.toggle("loading", loading);
+    button.setAttribute("aria-busy", String(loading));
+  };
+  const done = () => {
+    delete form.dataset.sending;
+    setButton(buttonText);
+  };
+
+  setButton("Sending…", { loading: true, disabled: true });
   showStatus("", "");
 
-  const values = Object.fromEntries(new FormData(form));
-  const payload = { ...values, ...campaignDetails() };
+  const payload = { ...Object.fromEntries(new FormData(form)), ...campaignDetails() };
+  const timeout = new AbortController();
+  const timer = setTimeout(() => timeout.abort(), SEND_TIMEOUT_MS);
 
   try {
     const response = await fetch("/api/contact", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      signal: timeout.signal,
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.error || "Could not send the message.");
 
     form.reset();
     trackLead();
-    button.textContent = "Message Sent ✓";
+    setButton("Message Sent ✓", { disabled: true });
     showStatus("ok", "Thanks. We'll get back to you within 24 hours.");
-    setTimeout(() => {
-      button.textContent = buttonText;
-      button.disabled = false;
-    }, 2200);
+    setTimeout(done, 2200);
   } catch (error) {
-    button.textContent = buttonText;
-    button.disabled = false;
-    showStatus("error", error.message);
+    done();
+    const message = error.name === "AbortError"
+      ? "The connection is slow. Please check your internet and try again."
+      : error.message === "Failed to fetch"
+        ? "Could not reach the server. Please check your internet and try again."
+        : error.message;
+    showStatus("error", message);
+  } finally {
+    clearTimeout(timer);
   }
 }

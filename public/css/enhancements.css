@@ -104,6 +104,29 @@ a.price-btn {
   cursor: wait;
   opacity: 0.75;
   transform: none;
+  box-shadow: none;
+}
+
+/* Sending: small spinner next to "Sending…" */
+.form-submit.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.form-submit.loading::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: form-spin 0.7s linear infinite;
+}
+
+@keyframes form-spin {
+  to { transform: rotate(360deg); }
 }
 
 .hp {
