@@ -11,6 +11,7 @@ const { limited, strike, clear } = require("../rate-limit");
 
 const router = express.Router();
 const WINDOW = 15 * 60 * 1000;
+const REMEMBER_ME_DAYS = 30;
 const uploadDir = path.join(__dirname, "..", "..", "public", "uploads");
 fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -124,10 +125,13 @@ router.post("/login", async (req, res, next) => {
     }
 
     clear("login", ip);
+    const remember = !!(req.body && req.body.remember === true);
     req.session.regenerate((error) => {
       if (error) return next(error);
       req.session.adminId = admin.id;
       req.session.username = admin.username;
+      // "Remember me": stay signed in for 30 days. Otherwise SESSION_HOURS from .env (default 12).
+      if (remember) req.session.cookie.maxAge = REMEMBER_ME_DAYS * 24 * 60 * 60 * 1000;
       req.session.save((saveError) => {
         if (saveError) return next(saveError);
         res.json({ username: admin.username, mustChange: !!admin.must_change });

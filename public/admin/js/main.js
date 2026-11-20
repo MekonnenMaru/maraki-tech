@@ -8,13 +8,13 @@
 // register it below, and add it to config/menu.js.
 import { api, whenSignedOut } from "./core/api.js";
 import { startActions, registerForms, registerActions } from "./core/actions.js";
-import { startShell, registerPage, registerListPage, showLogin, showApp, session } from "./core/shell.js";
+import { startShell, registerPage, registerListPage, showLogin, showApp, session, REMEMBERED_USER_KEY } from "./core/shell.js";
 import { renderDashboard } from "./pages/dashboard.js";
 import { renderMessages } from "./pages/messages.js";
 import { renderSettings } from "./pages/settings.js";
 import { renderList, isList } from "./pages/list.js";
 import { renderAccount } from "./pages/account.js";
-import { toast } from "./core/util.js";
+import { toast, storage } from "./core/util.js";
 
 registerPage("dashboard", renderDashboard);
 registerPage("messages", renderMessages);
@@ -24,13 +24,32 @@ registerListPage(renderList, isList);
 
 /* ---------- Sign in / out ---------- */
 
+// Asks the browser's password manager (Chrome, Edge, …) to offer saving the login.
+// The site itself never stores the password.
+function offerToSavePassword(username, password) {
+  if (!("PasswordCredential" in window)) return; // other browsers show their own prompt
+  navigator.credentials.store(new PasswordCredential({ id: username, password, name: username })).catch(() => {});
+}
+
 registerForms({
   login: async (form) => {
+    const username = form.username.value.trim();
+    const password = form.password.value;
+    const remember = form.remember.checked;
     try {
       const result = await api("/api/admin/login", {
         method: "POST",
-        body: { username: form.username.value.trim(), password: form.password.value },
+        body: { username, password, remember },
       });
+
+      // "Remember me": keep the username on this device and offer to save the password.
+      if (remember) {
+        storage.set(REMEMBERED_USER_KEY, result.username);
+        offerToSavePassword(result.username, password);
+      } else {
+        storage.remove(REMEMBERED_USER_KEY);
+      }
+
       session.username = result.username;
       session.mustChange = result.mustChange;
       session.page = "dashboard";

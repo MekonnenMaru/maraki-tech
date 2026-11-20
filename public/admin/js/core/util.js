@@ -57,4 +57,11 @@ export const storage = {
       /* ignore */
     }
   },
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  },
 };

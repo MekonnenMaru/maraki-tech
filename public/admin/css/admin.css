@@ -278,6 +278,9 @@ input:focus, select:focus, textarea:focus {
 }
 .login-head { display: grid; gap: 6px; margin-top: 6px; }
 .login-head h1 { font-size: 1.35rem; font-weight: 750; }
+.remember { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; font-size: 0.9rem; color: var(--muted); }
+.remember input { width: 18px; height: 18px; margin: 0; accent-color: var(--brand); cursor: pointer; }
+.remember:hover { color: var(--text); }
 .login-foot { display: flex; justify-content: space-between; gap: 12px; padding: 0 6px; color: var(--muted); font-size: 0.84rem; }
 .login-foot a { color: var(--muted); text-decoration: none; }
 .login-foot a:hover { color: var(--text); }

@@ -30,12 +30,23 @@ export function view() {
 
 /* ---------- Screens ---------- */
 
+// The username saved by "Remember me" (only the username — never the password).
+export const REMEMBERED_USER_KEY = "maraki-admin-username";
+
 export function showLogin() {
   closeModal();
   $("boot").hidden = true;
   $("appView").hidden = true;
   $("loginView").hidden = false;
-  $("loginForm").elements.username.focus();
+
+  const form = $("loginForm");
+  const saved = storage.get(REMEMBERED_USER_KEY) || "";
+  form.elements.username.value = saved;
+  form.elements.remember.checked = !!saved;
+  form.elements.password.type = "password"; // hide it again if "Show" was used
+  const toggle = form.querySelector(".password-toggle");
+  if (toggle) toggle.textContent = "Show";
+  (saved ? form.elements.password : form.elements.username).focus();
 }
 
 export function showApp() {
