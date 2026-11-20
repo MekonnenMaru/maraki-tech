@@ -30,6 +30,9 @@ src/
     pages.js              Home page (with Google tags), privacy, sitemap, 404
     public.js             /api/content (page data) and /api/contact (form)
     admin.js              /api/admin/* (everything the dashboard does)
+  views/
+    html.js               Server-side HTML helpers (escaping, site URL)
+    privacy.js            Privacy policy text; contact details come from Site settings
   db/
     index.js              One import for all database functions
     connection.js         MySQL pool + query helpers
@@ -40,7 +43,7 @@ src/
     admins.js             Admin accounts
 public/
   index.html              Page shell; the content is filled in by js/main.js
-  privacy.html            Privacy policy
+  (privacy policy)        Built by the server: src/views/privacy.js
   css/style.css           Main styles
   css/enhancements.css    Newer styles that build on style.css
   js/

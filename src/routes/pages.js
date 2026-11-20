@@ -3,26 +3,13 @@ const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const db = require("../db");
+const config = require("../config");
+const { esc: escAttr, siteUrl } = require("../views/html");
+const { privacyPage } = require("../views/privacy");
 
 const router = express.Router();
 const publicDir = path.join(__dirname, "..", "..", "public");
 const homeTemplate = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
-
-function escAttr(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-// "https://maraki.tech" — works behind a proxy (nginx, Cloudflare, cPanel).
-function siteUrl(req) {
-  const first = (value) => String(value || "").split(",")[0].trim();
-  const host = first(req.get("x-forwarded-host") || req.get("host")) || "localhost:3000";
-  const protocol = first(req.get("x-forwarded-proto") || req.protocol) || "http";
-  return `${protocol}://${host}`;
-}
 
 // The hero image is used as the link preview picture when it is a JPG/PNG/WebP.
 function previewImage(s, base) {
@@ -105,8 +92,16 @@ router.get(["/", "/index.html"], async (req, res, next) => {
   }
 });
 
-router.get(["/privacy", "/privacy.html"], (req, res) => {
-  res.sendFile(path.join(publicDir, "privacy.html"));
+// Privacy policy: contact details and Google sections follow the admin settings.
+// Text lives in src/views/privacy.js.
+router.get(["/privacy", "/privacy.html"], async (req, res, next) => {
+  try {
+    const settings = await db.getSettings();
+    const html = privacyPage(settings, { base: siteUrl(req), sessionHours: config.sessionHours });
+    res.set("Cache-Control", "no-cache").type("html").send(html);
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ads.txt tells ad buyers which ad accounts may sell ads on this site. AdSense needs it.

@@ -103,7 +103,7 @@ If you remove the publisher ID later, the script and `ads.txt` disappear on thei
   free consent message. It appears automatically on your site for European visitors only.
 - Other countries may have their own rules. Check what applies where your visitors live.
 
-The privacy policy (`public/privacy.html`) already includes the text AdSense requires about
+The privacy policy (`src/views/privacy.js`) automatically adds the text AdSense requires about
 advertising cookies and how to opt out.
 
 ---
