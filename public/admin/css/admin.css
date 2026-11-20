@@ -1,5 +1,5 @@
 /* =========================================================================
-   Maraki Admin — styles
+   Admin dashboard — styles
    1. Colors (dark + light)      6. Cards, stats, chart, checklist
    2. Base                       7. Tables and lists
    3. Buttons, chips, inputs     8. Settings tabs and save bar
@@ -117,6 +117,7 @@ html[data-theme="light"] .logo-mark .ring { border-color: #0a8a42; }
 
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: 0.04em; text-decoration: none; }
 .brand small { font-weight: 500; letter-spacing: 0; color: var(--muted); margin-left: 4px; }
+.brand .brand-logo { display: block; height: 30px; width: auto; max-width: 160px; object-fit: contain; }
 
 /* ---------- 3. Buttons, chips, inputs ---------- */
 

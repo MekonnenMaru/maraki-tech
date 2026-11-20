@@ -8,8 +8,9 @@
 
 import { esc } from "../lib/html.js";
 
-const CONSENT_KEY = "mt_consent";
-const ATTRIBUTION_KEY = "mt_attr";
+// Names also listed in src/storage-names.js (shown in the privacy policy).
+const CONSENT_KEY = "cookie_choice";
+const ATTRIBUTION_KEY = "campaign_source";
 const URL_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "gbraid", "wbraid"];
 
 let ids = { ga4: "", adsId: "", adsLabel: "" };

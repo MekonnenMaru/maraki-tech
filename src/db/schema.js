@@ -2,7 +2,7 @@
 // To add a column: add it to the table below AND to UPGRADES so existing databases get it too.
 const bcrypt = require("bcryptjs");
 const { query, execute, count } = require("./connection");
-const { PLATFORMS, DEFAULT_USERNAME } = require("../social");
+const { PLATFORMS, usernameFrom } = require("../social");
 
 const ID = "id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY";
 const ORDER_AND_VISIBLE = ["sort_order INT NOT NULL DEFAULT 0", "visible TINYINT(1) NOT NULL DEFAULT 1"];
@@ -142,15 +142,12 @@ const UPGRADES = {
   ],
 };
 
-// The default Entertainment apps. Missing ones are added back on start.
+// Sample Entertainment apps for a brand-new install (added once; edit or delete them in the admin).
 // [name, tagline, description, family, channel, edition, sort_order]
-const APP_CATALOG = [
-  ["Ethiomark Bingo", "Hall layout", "Online and offline Bingo with the Ethiomark layout.", "bingo", "both", "", 0],
-  ["Anbesa Bingo", "Hall layout", "Online and offline Bingo with the Anbesa layout.", "bingo", "both", "", 1],
-  ["Telegram Bingo", "Telegram bot", "Bingo through Telegram in the Normal format.", "bingo", "telegram", "Normal", 2],
-  ["Telegram Bingo", "Telegram bot", "Bingo through Telegram in the Super format.", "bingo", "telegram", "Super", 3],
-  ["Keno", "Online & Offline", "Keno for online play and offline venues.", "keno", "both", "", 4],
-  ["Spin", "Online & Offline", "Spin for online play and offline venues.", "spin", "both", "", 5],
+const SAMPLE_APPS = [
+  ["Bingo", "Online & Offline", "Bingo for online play and offline venues.", "bingo", "both", "", 0],
+  ["Keno", "Online & Offline", "Keno for online play and offline venues.", "keno", "both", "", 1],
+  ["Spin", "Online & Offline", "Spin for online play and offline venues.", "spin", "both", "", 2],
 ];
 
 async function createTables() {
@@ -189,44 +186,63 @@ async function renameOldSettings() {
   }
 }
 
-// First start with the social links list: one row per platform with the default username.
-// If an older version saved a username or on/off switches in Site settings, those are used.
-// Runs only once (remembered in the settings table), so deleted rows don't come back.
-async function addDefaultSocialLinks() {
-  const done = await count("SELECT COUNT(*) AS count FROM settings WHERE `key` = 'social_links_created'");
-  if (done) return;
+// New settings get a neutral default for new installs. Sites that existed before a setting was
+// added keep working exactly as they did, using the value below (only if nothing is saved yet).
+const EARLIER_BEHAVIOUR = {
+  time_zone: "Africa/Nairobi", // before the time-zone setting, the clock and dates used East Africa Time
+};
 
+async function keepEarlierBehaviour() {
+  const existingSite = await count("SELECT COUNT(*) AS count FROM settings");
+  if (!existingSite) return; // brand-new install: the neutral defaults apply
+  for (const [key, value] of Object.entries(EARLIER_BEHAVIOUR)) {
+    await execute("INSERT IGNORE INTO settings (`key`, value) VALUES (?, ?)", [key, value]);
+  }
+}
+
+// Runs `work` only the first time; remembered by a marker in the settings table.
+async function once(marker, work) {
+  if (await count("SELECT COUNT(*) AS count FROM settings WHERE `key` = ?", [marker])) return;
+  await work();
+  await execute("INSERT IGNORE INTO settings (`key`, value) VALUES (?, '1')", [marker]);
+}
+
+// First start with the social links list: one row per platform.
+// Username: one saved by an older version, otherwise made from the company name ("Maraki Tech" → "marakitech").
+// Runs only once, so rows you delete don't come back.
+async function addDefaultSocialLinks() {
+  await once("social_links_created", async () => {
   const saved = Object.fromEntries(
-    (await query("SELECT `key`, value FROM settings WHERE `key` LIKE 'social%' OR `key` LIKE 'show_social_%'")).map((row) => [row.key, row.value])
+    (await query("SELECT `key`, value FROM settings WHERE `key` IN ('social_username', 'company_name') OR `key` LIKE 'show_social_%'")).map((row) => [row.key, row.value])
   );
-  const username = String(saved.social_username || "").replace(/^@/, "").trim() || DEFAULT_USERNAME;
+  const username = String(saved.social_username || "").replace(/^@/, "").trim() || usernameFrom(saved.company_name);
 
   if (!(await count("SELECT COUNT(*) AS count FROM social_links"))) {
     let order = 0;
     for (const platform of PLATFORMS) {
       if (platform.id === "other") continue;
       const visible = saved[`show_social_${platform.id}`] === "0" ? 0 : 1;
-      const handle = platform.id === "whatsapp" ? "" : username; // WhatsApp: phone from Contact details
+      const handle = platform.id === "whatsapp" ? "" : username; // WhatsApp: phone from the Company profile
       await execute(
         "INSERT INTO social_links (platform, handle, sort_order, visible) VALUES (?, ?, ?, ?)",
         [platform.id, handle, order++, visible]
       );
     }
   }
-  await execute("INSERT IGNORE INTO settings (`key`, value) VALUES ('social_links_created', '1')");
+  });
 }
 
-async function addMissingApps() {
-  for (const app of APP_CATALOG) {
-    const [name, , , , , edition] = app;
-    const found = await count("SELECT COUNT(*) AS count FROM apps WHERE name = ? AND edition = ?", [name, edition]);
-    if (found) continue;
-    await execute(
-      `INSERT INTO apps (name, tagline, description, photos, video, link, family, channel, edition, sort_order, visible)
-       VALUES (?, ?, ?, '[]', '', '', ?, ?, ?, ?, 1)`,
-      app
-    );
-  }
+async function addSampleApps() {
+  await once("sample_apps_added", async () => {
+    if (await count("SELECT COUNT(*) AS count FROM apps")) return; // the site already has its own apps
+    for (const app of SAMPLE_APPS) {
+      await execute(
+        `INSERT INTO apps (name, tagline, description, photos, video, link, family, channel, edition, sort_order, visible)
+         VALUES (?, ?, ?, '[]', '', '', ?, ?, ?, ?, 1)`,
+        app
+      );
+    }
+  });
 }
 
 // First start only: username "admin", password "admin123" (the dashboard forces a change).
@@ -238,4 +254,4 @@ async function createFirstAdmin() {
   );
 }
 
-module.exports = { createTables, addMissingColumns, renameOldSettings, addDefaultSocialLinks, addMissingApps, createFirstAdmin };
+module.exports = { createTables, addMissingColumns, renameOldSettings, keepEarlierBehaviour, addDefaultSocialLinks, addSampleApps, createFirstAdmin };

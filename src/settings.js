@@ -1,3 +1,7 @@
+// Everything the admin can edit (stored in the database, table "settings").
+// Nothing here is specific to one company: a new install starts with neutral texts,
+// and {company}, {email}, {phone}, {location} in any text are filled in from the Company profile.
+
 function field(key, label, type = "text", extra = {}) {
   return { key, label, type, ...extra };
 }
@@ -26,7 +30,64 @@ function sectionFields(id, name) {
   ];
 }
 
+// Time zones for the clock, visit counts and dates. [IANA name, label]
+const TIME_ZONES = [
+  ["UTC", "UTC"],
+  ["Africa/Addis_Ababa", "Addis Ababa (UTC+3)"],
+  ["Africa/Nairobi", "Nairobi (UTC+3)"],
+  ["Africa/Cairo", "Cairo"],
+  ["Africa/Johannesburg", "Johannesburg (UTC+2)"],
+  ["Africa/Lagos", "Lagos (UTC+1)"],
+  ["Africa/Accra", "Accra (UTC+0)"],
+  ["Africa/Casablanca", "Casablanca"],
+  ["Africa/Kigali", "Kigali (UTC+2)"],
+  ["Africa/Kampala", "Kampala (UTC+3)"],
+  ["Africa/Dar_es_Salaam", "Dar es Salaam (UTC+3)"],
+  ["Europe/London", "London"],
+  ["Europe/Paris", "Paris / Berlin / Rome"],
+  ["Europe/Istanbul", "Istanbul (UTC+3)"],
+  ["Europe/Moscow", "Moscow (UTC+3)"],
+  ["Asia/Dubai", "Dubai (UTC+4)"],
+  ["Asia/Riyadh", "Riyadh (UTC+3)"],
+  ["Asia/Karachi", "Karachi (UTC+5)"],
+  ["Asia/Kolkata", "India (UTC+5:30)"],
+  ["Asia/Dhaka", "Dhaka (UTC+6)"],
+  ["Asia/Bangkok", "Bangkok (UTC+7)"],
+  ["Asia/Singapore", "Singapore (UTC+8)"],
+  ["Asia/Shanghai", "China (UTC+8)"],
+  ["Asia/Tokyo", "Tokyo (UTC+9)"],
+  ["Australia/Sydney", "Sydney"],
+  ["Pacific/Auckland", "Auckland"],
+  ["America/Sao_Paulo", "São Paulo (UTC−3)"],
+  ["America/New_York", "New York (US Eastern)"],
+  ["America/Chicago", "Chicago (US Central)"],
+  ["America/Denver", "Denver (US Mountain)"],
+  ["America/Los_Angeles", "Los Angeles (US Pacific)"],
+  ["America/Toronto", "Toronto"],
+  ["America/Mexico_City", "Mexico City"],
+];
+
 const GROUPS = [
+  {
+    id: "profile",
+    title: "Company profile",
+    intro: "Who you are. Used everywhere: logo, footer, contact section, privacy policy, Google, WhatsApp, clock and dates.",
+    fields: [
+      field("company_name", "Company name", "text", {
+        hint: "Without a logo, the site shows the first word in capitals as the logo.",
+      }),
+      field("logo_image", "Logo", "image", {
+        hint: "Optional. A PNG or WebP with a transparent background works best (under 2 MB). Also used as the browser tab icon.",
+      }),
+      field("email", "Email"),
+      field("phone", "Phone", "text", { hint: "With country code, e.g. +44 20 1234 5678. Also used for the WhatsApp link." }),
+      field("location", "Location", "text", { hint: "City, Country — e.g. Addis Ababa, Ethiopia. The country is used in the privacy policy." }),
+      field("time_zone", "Time zone", "choice", {
+        options: TIME_ZONES,
+        hint: "For the clock on the site, visit counts and dates in the dashboard.",
+      }),
+    ],
+  },
   {
     id: "visibility",
     title: "Visibility",
@@ -48,12 +109,9 @@ const GROUPS = [
   },
   {
     id: "seo",
-    title: "Brand and SEO",
-    intro: "Your company name, and how the site appears in the browser tab and on Google.",
+    title: "Google & browser tab",
+    intro: "How the site appears in the browser tab and on Google. Both are optional.",
     fields: [
-      field("company_name", "Company name", "text", {
-        hint: "Used everywhere: the logo shows the first word in capitals, plus the footer, Google and the privacy policy.",
-      }),
       field("meta_title", "Page title (browser tab and Google)", "text", {
         hint: "Empty = the company name.",
       }),
@@ -101,12 +159,9 @@ const GROUPS = [
   },
   {
     id: "contact",
-    title: "Contact",
-    intro: "Your contact details (used everywhere on the site) and the contact form texts.",
+    title: "Contact section",
+    intro: "Texts of the contact section. Your email, phone and location come from the Company profile.",
     fields: [
-      field("email", "Email"),
-      field("phone", "Phone", "text", { hint: "Also used for the WhatsApp link." }),
-      field("location", "Location"),
       field("contact_aside_title", "Text beside the form: title"),
       field("contact_aside_text", "Text beside the form", "textarea"),
       field("form_button", "Form button"),
@@ -188,16 +243,21 @@ const DEFAULT_SETTINGS = {
   show_contact: "1",
   show_cta: "1",
 
-  company_name: "Maraki Tech",
-  meta_title: "Maraki Tech — Technology That Moves Business Forward",
-  meta_description:
-    "Maraki Tech builds modern software, payment solutions, business platforms and digital products.",
+  company_name: "Your Company",
+  logo_image: "",
+  email: "",
+  phone: "",
+  location: "",
+  time_zone: "UTC",
 
-  badge: "Building the future from Ethiopia",
+  meta_title: "",
+  meta_description: "",
+
+  badge: "Building what's next",
   hero_title: "Technology {highlight} business forward.",
   hero_highlight: "that moves",
   hero_text:
-    "Maraki Tech builds modern software, payment solutions, business platforms and digital products designed to solve real-world problems.",
+    "{company} builds modern software, payment solutions, business platforms and digital products designed to solve real-world problems.",
   hero_image:
     "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop",
   hero_image_alt: "Technology network visualization",
@@ -222,7 +282,7 @@ const DEFAULT_SETTINGS = {
 
   products_label: "Our ecosystem",
   products_title: "Products {highlight}",
-  products_highlight: "built by Maraki.",
+  products_highlight: "built by {company}.",
   products_text: "",
 
   apps_label: "Entertainment",
@@ -269,9 +329,6 @@ const DEFAULT_SETTINGS = {
   contact_aside_title: "Get in touch",
   contact_aside_text:
     "Whether you're starting a new digital product, improving an existing system, or looking for a technology partner — we'd love to hear from you.",
-  email: "hello@maraki.tech",
-  phone: "+251 900 000 000",
-  location: "Addis Ababa, Ethiopia",
 
   cta_title: "Ready to build something {highlight}",
   cta_highlight: "great?",
@@ -280,7 +337,7 @@ const DEFAULT_SETTINGS = {
   cta_button_href: "#contact",
 
   footer_blurb:
-    "Technology that moves business forward. We build modern software, payment solutions, and digital products from Ethiopia.",
+    "Technology that moves business forward. We build modern software, payment solutions, and digital products.",
   footer_col_product: "Product",
   footer_col_company: "Company",
   footer_col_contact: "Contact",
@@ -311,4 +368,4 @@ if (missing.length || extra.length || dupes.length) {
   );
 }
 
-module.exports = { GROUPS, DEFAULT_SETTINGS };
+module.exports = { GROUPS, DEFAULT_SETTINGS, TIME_ZONES };

@@ -17,7 +17,7 @@ if (!fs.existsSync(envPath)) {
       "DB_PORT=3306",
       "DB_USER=root",
       "DB_PASSWORD=",
-      "DB_NAME=maraki_tech",
+      "DB_NAME=company_website",
       "DB_CONNECTION_LIMIT=10",
       "DB_QUEUE_LIMIT=0",
       "",

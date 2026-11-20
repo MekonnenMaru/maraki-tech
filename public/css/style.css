@@ -1,5 +1,5 @@
 /* =========================================================
-       MARAKI TECH — Modern Landing Page
+       Company website — styles
     ========================================================= */
 
     * {
@@ -173,6 +173,15 @@
       font-size: 21px;
       font-weight: 800;
       letter-spacing: -1px;
+    }
+
+    /* Uploaded logo (Company profile) — used instead of the round mark + text */
+    .brand-logo {
+      display: block;
+      height: 36px;
+      width: auto;
+      max-width: 200px;
+      object-fit: contain;
     }
 
     .logo-mark {

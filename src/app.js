@@ -4,6 +4,7 @@ const express = require("express");
 const session = require("express-session");
 const MySQLStore = require("express-mysql-session")(session);
 const config = require("./config");
+const { SESSION_COOKIE } = require("./storage-names");
 const db = require("./db");
 const publicRoutes = require("./routes/public");
 const adminRoutes = require("./routes/admin");
@@ -36,7 +37,7 @@ function sessions() {
   );
 
   return session({
-    name: "maraki.sid",
+    name: SESSION_COOKIE,
     secret: config.sessionSecret,
     store,
     resave: false,

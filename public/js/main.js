@@ -1,4 +1,4 @@
-// Maraki Tech landing page — entry point.
+// Company website — entry point. All content comes from the database (admin dashboard).
 //
 // 1. Fetch all content from /api/content (everything is edited in the admin dashboard).
 // 2. Build the page from the section files in ./sections.
@@ -7,7 +7,7 @@
 // To add a new section: create a file in ./sections, import it here,
 // and add one line to the `sections` list in renderPage().
 
-import { esc, logoMark, logoText, withPlaceholders } from "./lib/html.js";
+import { esc, brandHtml, withPlaceholders } from "./lib/html.js";
 import { visibleSections } from "./lib/visibility.js";
 import { navHtml } from "./sections/nav.js";
 import { heroHtml, startHeroClock } from "./sections/hero.js";
@@ -52,7 +52,7 @@ function renderPage(data) {
     show.cta && ctaHtml(s),
   ];
 
-  document.getElementById("brandLockup").innerHTML = `${logoMark()}${esc(logoText(s))}`;
+  document.getElementById("brandLockup").innerHTML = brandHtml(s);
   document.getElementById("navLinks").innerHTML = navHtml(s, show);
   document.getElementById("page").innerHTML = sections.filter(Boolean).join("");
   document.getElementById("footer").innerHTML = footerHtml(s, show, data.social);

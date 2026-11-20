@@ -15,6 +15,19 @@ There is no build step: edit a file, refresh the browser.
 Tables are created automatically on start. To check that everything works, run
 `node scripts/smoke.js` while the server is running.
 
+## Use it for another company
+
+Nothing about one company is written in the code — it's all in the database:
+
+1. Install it with a new, empty database (see Run it).
+2. Sign in to `/admin`, change the password, and fill in **Company profile**
+   (name, logo, email, phone, location, time zone).
+3. Replace the starter texts in **Site settings** and the lists (services, products, FAQ, …),
+   and set up **Social links** and **Privacy policy**.
+
+A new install starts neutral ("Your Company", UTC, empty contact details, sample texts that use
+`{company}`). Cookie and storage names are neutral too (see `src/storage-names.js`).
+
 ## Where things live
 
 ```
@@ -22,7 +35,10 @@ server.js                 Starts everything (read this first; it's short)
 src/
   config.js               Reads .env
   app.js                  Express setup: headers, sessions, routes, errors
-  settings.js             Every text/setting the admin can edit, plus defaults
+  settings.js             Every text/setting the admin can edit (incl. Company profile), plus defaults
+  social.js               Social platforms and how links are built
+  time.js                 Dates in the company's time zone
+  storage-names.js        Names of every cookie / browser-storage item
   content.js              Rules for the editable lists (fields, limits, types)
   seed.js                 Sample content inserted on the very first start
   rate-limit.js           Stops spam on the contact form and login

@@ -2,6 +2,7 @@ const express = require("express");
 const db = require("../db");
 const { COLLECTIONS, present, fail } = require("../content");
 const { socialLinks } = require("../social");
+const { VISIT_COOKIE } = require("../storage-names");
 const { limited, strike } = require("../rate-limit");
 
 const router = express.Router();
@@ -72,16 +73,26 @@ router.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
+// The basics of the Company profile, for the admin sign-in page and dashboard header.
+router.get("/profile", async (req, res, next) => {
+  try {
+    const s = await db.getSettings();
+    res.json({ company_name: s.company_name, logo_image: s.logo_image, time_zone: s.time_zone });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/content", async (req, res, next) => {
   try {
     const cookies = req.headers.cookie || "";
-    const seen = cookies.split(";").some((part) => part.trim().startsWith("mt_seen="));
+    const settings = await db.getSettings();
+    const seen = cookies.split(";").some((part) => part.trim().startsWith(`${VISIT_COOKIE}=`));
     if (!seen) {
-      await db.recordVisit();
-      res.append("Set-Cookie", "mt_seen=1; Max-Age=1800; Path=/; HttpOnly; SameSite=Lax");
+      await db.recordVisit(settings.time_zone);
+      res.append("Set-Cookie", `${VISIT_COOKIE}=1; Max-Age=1800; Path=/; HttpOnly; SameSite=Lax`);
     }
 
-    const settings = await db.getSettings();
     const payload = { settings };
     for (const [name, spec] of Object.entries(COLLECTIONS)) {
       const rows = await db.listRows(spec.table, { visibleOnly: true });

@@ -1,4 +1,4 @@
-// Maraki Tech — start the website and admin dashboard.
+// Company website + admin dashboard — start here.
 //   npm start      → run
 //   npm run dev    → run and restart when files change
 const config = require("./src/config");
@@ -17,7 +17,7 @@ async function start() {
 
   const app = createApp();
   const server = app.listen(config.port, async () => {
-    console.log(`Maraki Tech is running at http://localhost:${config.port}`);
+    console.log(`Website is running at http://localhost:${config.port}`);
     console.log(`Admin dashboard: http://localhost:${config.port}/admin`);
     if (await db.passwordChangeRequired()) {
       console.log("Admin login: admin / admin123  — change this after you sign in.");

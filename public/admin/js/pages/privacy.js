@@ -21,7 +21,7 @@ const FORMAT_HELP = `
       <li>Start a line with <code>- </code> for a bullet point.</li>
       <li><code>**words**</code> makes words <strong>bold</strong>.</li>
       <li><code>[text](https://example.com)</code> makes a link.</li>
-      <li>These are filled in from Site settings: <code>{company}</code> (company name), <code>{email}</code> (contact email), <code>{domain}</code> (website address).</li>
+      <li>These are filled in from the Company profile: <code>{company}</code> (company name), <code>{email}</code> (email), <code>{domain}</code> (website address).</li>
     </ul>
   </details>
 `;
@@ -92,7 +92,7 @@ function render(state) {
     <div class="page-head">
       <div>
         <h2>Privacy policy</h2>
-        <p class="muted">This is your public Privacy Policy page. Add, edit, hide or reorder sections. Your company name, email, phone and location come from <a href="#content" data-action="go" data-page="content">Site settings</a>.
+        <p class="muted">This is your public Privacy Policy page. Add, edit, hide or reorder sections. Your company name, email, phone and location come from the <a href="#profile" data-action="go" data-page="profile">Company profile</a>.
           ${state.updated ? ` Last updated: <strong>${esc(formatDate(state.updated))}</strong>.` : ""}</p>
       </div>
       <a class="btn ghost" href="/privacy" target="_blank" rel="noopener">${icon("external")}View page</a>
@@ -129,8 +129,8 @@ function openEditor(section) {
   const isNew = !section;
   // Where the automatic part (shown read-only under the text) comes from.
   const autoSource = section && {
-    who: "From Site settings → Contact details. Change them there.",
-    contact: "From Site settings → Contact details. Change them there.",
+    who: "From the Company profile. Change them there.",
+    contact: "From the Company profile. Change them there.",
     cookies: "Made from what the website really stores. It updates itself, for example when you add a Google ID.",
   }[section.id];
   const note = isNew

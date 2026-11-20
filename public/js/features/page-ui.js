@@ -57,7 +57,7 @@ export function scrollToSection(section) {
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   try {
-    localStorage.setItem("maraki-theme", theme);
+    localStorage.setItem("theme", theme); // name also in src/storage-names.js
   } catch {
     /* ignore */
   }

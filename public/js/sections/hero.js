@@ -1,4 +1,4 @@
-// The first screen: headline, buttons, image and the live Nairobi clock.
+// The first screen: headline, buttons, image and a live clock in the company's time zone.
 import { esc, safeHref, safeSrc, externalAttrs, richTitle, twoDigits } from "../lib/html.js";
 
 export function heroHtml(s) {
@@ -27,21 +27,45 @@ export function heroHtml(s) {
           ${media}
           <div class="hero-sheen" aria-hidden="true"></div>
         </div>
-        ${clockHtml()}
+        ${clockHtml(s)}
       </div>
     </div>
   `;
 }
 
-/* ---------- Nairobi clock ---------- */
+/* ---------- Clock (Company profile → Time zone) ---------- */
 
-function clockHtml() {
+function zoneOf(s) {
+  const zone = String(s.time_zone || "UTC");
+  try {
+    new Intl.DateTimeFormat("en-GB", { timeZone: zone });
+    return zone;
+  } catch {
+    return "UTC";
+  }
+}
+
+// "Africa/Addis_Ababa" → "Addis Ababa"; plus the short zone name, e.g. "EAT" or "GMT+3".
+function zoneLabels(zone) {
+  const city = zone === "UTC" ? "UTC" : zone.split("/").pop().replace(/_/g, " ");
+  const short = new Intl.DateTimeFormat("en-GB", { timeZone: zone, timeZoneName: "short" })
+    .formatToParts(new Date())
+    .find((part) => part.type === "timeZoneName")?.value || "";
+  const long = new Intl.DateTimeFormat("en-GB", { timeZone: zone, timeZoneName: "long" })
+    .formatToParts(new Date())
+    .find((part) => part.type === "timeZoneName")?.value || "";
+  return { city, short: short === city ? "" : short, long };
+}
+
+function clockHtml(s) {
+  const zone = zoneOf(s);
+  const { city, short } = zoneLabels(zone);
   const ticks = Array.from({ length: 60 }, (_, i) =>
     `<span class="clock-tick${i % 5 === 0 ? " major" : ""}" style="--i:${i}"></span>`
   ).join("");
 
   return `
-    <div class="hero-clock" role="img" aria-label="Current time in Nairobi">
+    <div class="hero-clock" role="img" aria-label="Current time in ${esc(city)}" data-zone="${esc(zone)}">
       <div class="clock-face" aria-hidden="true">
         <div class="clock-ring"></div>
         <div class="clock-ring soft"></div>
@@ -55,16 +79,16 @@ function clockHtml() {
       </div>
       <div class="clock-readout">
         <div class="clock-time" data-clock-time>00:00:00</div>
-        <div class="clock-zone">Nairobi · EAT</div>
+        <div class="clock-zone">${esc([city, short].filter(Boolean).join(" · "))}</div>
       </div>
     </div>
   `;
 }
 
-function nairobiTime() {
+function timeIn(zone) {
   const parts = {};
   new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Africa/Nairobi",
+    timeZone: zone,
     hour: "numeric",
     minute: "numeric",
     second: "numeric",
@@ -84,6 +108,8 @@ export function startHeroClock() {
 
   const clock = document.querySelector(".hero-clock");
   if (!clock) return;
+  const zone = clock.dataset.zone || "UTC";
+  const { city, long } = zoneLabels(zone);
 
   const hourHand = clock.querySelector("[data-clock-hour]");
   const minuteHand = clock.querySelector("[data-clock-minute]");
@@ -95,14 +121,14 @@ export function startHeroClock() {
   };
 
   const paint = () => {
-    const { hour, minute, second } = nairobiTime();
+    const { hour, minute, second } = timeIn(zone);
     const text = `${twoDigits(hour)}:${twoDigits(minute)}:${twoDigits(second)}`;
 
     rotate(hourHand, (hour % 12) * 30 + minute * 0.5);
     rotate(minuteHand, minute * 6 + second * 0.1);
     rotate(secondHand, second * 6);
     readout.textContent = text;
-    clock.setAttribute("aria-label", `Current time in Nairobi, ${text} East Africa Time`);
+    clock.setAttribute("aria-label", `Current time in ${city}, ${text} ${long}`);
   };
 
   paint();

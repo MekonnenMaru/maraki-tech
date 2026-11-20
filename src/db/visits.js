@@ -1,77 +1,36 @@
-// Page visit counter for the dashboard chart. Days are counted in Nairobi time (EAT).
+// Page visit counter for the dashboard chart.
+// Days are counted in the company's time zone (Company profile → Time zone).
 const { query, execute, count } = require("./connection");
+const { dayIn, addDays, dayKey, dayLabel } = require("../time");
 
-function nairobiParts(date = new Date()) {
-  const bag = {};
-  new Intl.DateTimeFormat("en-US", {
-    timeZone: "Africa/Nairobi",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-    hourCycle: "h23",
-  }).formatToParts(date).forEach((part) => {
-    bag[part.type] = part.value;
-  });
-  return { year: Number(bag.year), month: Number(bag.month), day: Number(bag.day), weekday: bag.weekday };
-}
-
-function shiftNairobi(parts, days) {
-  const utc = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + days));
-  return { year: utc.getUTCFullYear(), month: utc.getUTCMonth() + 1, day: utc.getUTCDate() };
-}
-
-function dayKeyFromParts(parts) {
-  return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
-}
-
-function dayKey(date) {
-  return dayKeyFromParts(nairobiParts(date));
-}
-
-async function recordVisit() {
+async function recordVisit(zone) {
   const now = new Date();
-  await execute("INSERT INTO visits (day, created_at) VALUES (?, ?)", [dayKey(now), now.toISOString()]);
+  await execute("INSERT INTO visits (day, created_at) VALUES (?, ?)", [dayKey(dayIn(zone, now)), now.toISOString()]);
 }
 
 // Visits per day (or per month for long ranges) for the dashboard chart.
-async function visitStats({ from = null, to = null } = {}) {
+async function visitStats({ from = null, to = null, zone = "UTC" } = {}) {
   const total = await count("SELECT COUNT(*) AS count FROM visits");
-  const today = nairobiParts();
-  const start = from ? nairobiParts(new Date(from)) : shiftNairobi(today, -6);
-  const end = to ? nairobiParts(new Date(to)) : shiftNairobi(today, 1);
-  const startKey = dayKeyFromParts(start);
-  const endKey = dayKeyFromParts(end);
+  const today = dayIn(zone);
+  const start = from ? dayIn(zone, new Date(from)) : addDays(today, -6);
+  const end = to ? dayIn(zone, new Date(to)) : addDays(today, 1);
+  const startKey = dayKey(start);
+  const endKey = dayKey(end);
   const rows = await query(
     "SELECT day, COUNT(*) AS count FROM visits WHERE day >= ? AND day < ? GROUP BY day",
     [startKey, endKey]
   );
-  let dayCount = 0;
-  let walker = start;
-  while (dayKeyFromParts(walker) < endKey && dayCount < 400) {
-    dayCount += 1;
-    walker = shiftNairobi(walker, 1);
-  }
-  const monthly = dayCount > 45;
 
-  if (monthly) {
+  let dayCount = 0;
+  for (let walker = start; dayKey(walker) < endKey && dayCount < 400; walker = addDays(walker, 1)) dayCount += 1;
+
+  // Long ranges: one bar per month.
+  if (dayCount > 45) {
     const buckets = [];
     let cursor = { year: start.year, month: start.month, day: 1 };
-    while (buckets.length < 24) {
-      const monthStart = dayKeyFromParts(cursor);
-      const next = {
-        year: cursor.month === 12 ? cursor.year + 1 : cursor.year,
-        month: cursor.month === 12 ? 1 : cursor.month + 1,
-        day: 1,
-      };
-      if (monthStart >= endKey) break;
-      const labelDate = new Date(Date.UTC(cursor.year, cursor.month - 1, 1) - 3 * 60 * 60 * 1000);
-      buckets.push({
-        day: monthStart.slice(0, 7),
-        label: labelDate.toLocaleDateString("en-US", { timeZone: "Africa/Nairobi", month: "short" }),
-        count: 0,
-      });
-      cursor = next;
+    while (buckets.length < 24 && dayKey(cursor) < endKey) {
+      buckets.push({ day: dayKey(cursor).slice(0, 7), label: dayLabel(cursor, { month: "short" }), count: 0 });
+      cursor = cursor.month === 12 ? { year: cursor.year + 1, month: 1, day: 1 } : { year: cursor.year, month: cursor.month + 1, day: 1 };
     }
     rows.forEach((row) => {
       const bucket = buckets.find((item) => item.day === row.day.slice(0, 7));
@@ -80,20 +39,16 @@ async function visitStats({ from = null, to = null } = {}) {
     return { total, week: buckets.reduce((sum, item) => sum + item.count, 0), series: buckets };
   }
 
+  // Otherwise one bar per day (weekday names for up to two weeks, day numbers after that).
   const counts = Object.fromEntries(rows.map((row) => [row.day, Number(row.count)]));
   const series = [];
-  let cursor = start;
-  while (dayKeyFromParts(cursor) < endKey && series.length < 45) {
-    const day = dayKeyFromParts(cursor);
-    const labelDate = new Date(Date.UTC(cursor.year, cursor.month - 1, cursor.day) - 3 * 60 * 60 * 1000);
+  for (let cursor = start; dayKey(cursor) < endKey && series.length < 45; cursor = addDays(cursor, 1)) {
+    const day = dayKey(cursor);
     series.push({
       day,
-      label: dayCount <= 14
-        ? labelDate.toLocaleDateString("en-US", { timeZone: "Africa/Nairobi", weekday: "short" })
-        : String(cursor.day),
+      label: dayCount <= 14 ? dayLabel(cursor, { weekday: "short" }) : String(cursor.day),
       count: counts[day] || 0,
     });
-    cursor = shiftNairobi(cursor, 1);
   }
   return { total, week: series.reduce((sum, item) => sum + item.count, 0), series };
 }

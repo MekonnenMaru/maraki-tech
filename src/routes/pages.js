@@ -4,7 +4,7 @@ const path = require("path");
 const express = require("express");
 const db = require("../db");
 const config = require("../config");
-const { esc: escAttr, siteUrl, companyName, logoText } = require("../views/html");
+const { esc: escAttr, siteUrl, companyName, logoText, logoUrl, brandHtml, fillPlaceholders } = require("../views/html");
 const { privacyPage } = require("../views/privacy");
 const { socialLinks } = require("../social");
 
@@ -15,11 +15,17 @@ const homeTemplate = fs.readFileSync(path.join(publicDir, "index.html"), "utf8")
 // Browser tab / Google title and description. Both are optional in Site settings:
 // empty title → company name, empty description → the hero supporting text.
 function pageTitle(s) {
-  return String(s.meta_title || "").trim() || companyName(s);
+  return fillPlaceholders(String(s.meta_title || "").trim(), s) || companyName(s);
 }
 
 function pageDescription(s) {
-  return String(s.meta_description || "").trim() || String(s.hero_text || "").trim();
+  return fillPlaceholders(String(s.meta_description || "").trim() || String(s.hero_text || "").trim(), s);
+}
+
+// The uploaded logo becomes the browser tab icon too.
+function setFavicon(html, s) {
+  const logo = logoUrl(s);
+  return logo ? html.replace(/<link rel="icon" href="[^"]*" \/>/, () => `<link rel="icon" href="${escAttr(logo)}" />`) : html;
 }
 
 // The hero image is used as the link preview picture when it is a JPG/PNG/WebP.
@@ -99,8 +105,10 @@ router.get(["/", "/index.html"], async (req, res, next) => {
     // Company name in the loading screen, the logo (before the page script runs) and the no-JavaScript note.
     html = html
       .replace(/(<div class="loader-word">)[^<]*(<\/div>)/, (m, a, b) => a + escAttr(logoText(s)) + b)
-      .replace(/(id="brandLockup">)[^<]*(<\/a>)/, (m, a, b) => a + escAttr(logoText(s)) + b)
+      .replace(/(id="brandLockup">)[^<]*(<\/a>)/, (m, a, b) => a + brandHtml(s) + b)
       .replace(/(Enable JavaScript to view the )[^<]*( site\.)/, (m, a, b) => a + escAttr(companyName(s)) + b);
+
+    html = setFavicon(html, s);
 
     res.set("Cache-Control", "no-cache").type("html").send(html);
   } catch (error) {
@@ -113,7 +121,7 @@ router.get(["/", "/index.html"], async (req, res, next) => {
 router.get(["/privacy", "/privacy.html"], async (req, res, next) => {
   try {
     const [settings, overrides] = await Promise.all([db.getSettings(), db.getPrivacyOverrides()]);
-    const html = privacyPage(settings, { base: siteUrl(req), sessionHours: config.sessionHours, overrides });
+    const html = setFavicon(privacyPage(settings, { base: siteUrl(req), sessionHours: config.sessionHours, overrides }), settings);
     res.set("Cache-Control", "no-cache").type("html").send(html);
   } catch (error) {
     next(error);

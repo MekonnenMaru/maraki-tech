@@ -1,5 +1,5 @@
 // The closing call-to-action banner and the page footer.
-import { esc, safeHref, externalAttrs, richTitle, logoMark, logoText, companyName } from "../lib/html.js";
+import { esc, safeHref, externalAttrs, richTitle, brandHtml, companyName } from "../lib/html.js";
 import { socialIcon } from "../lib/social-icons.js";
 
 export function ctaHtml(s) {
@@ -49,7 +49,7 @@ export function footerHtml(s, show, social) {
   return `
     <div class="footer-grid">
       <div class="footer-col">
-        <div class="footer-logo">${logoMark()}${esc(logoText(s))}</div>
+        <div class="footer-logo">${brandHtml(s)}</div>
         ${s.footer_blurb ? `<p>${esc(s.footer_blurb)}</p>` : ""}
         ${socialLinks(social)}
       </div>

@@ -35,7 +35,7 @@ async function seed(db) {
     }
 
     const products = [
-      ["Maraki Pay", "Payment verification and digital payment technology for modern businesses.", ""],
+      ["Payments", "Payment verification and digital payment technology for modern businesses.", ""],
       ["Business Systems", "Custom platforms that help businesses manage their operations from one place.", ""],
     ];
     for (const [index, row] of products.entries()) {
@@ -59,9 +59,9 @@ async function seed(db) {
     }
 
     const team = [
-      ["Abel Tesfaye", "Founder & Lead Engineer", "Full-stack architect focused on scalable systems and payment infrastructure.", ["Node.js", "TypeScript", "MySQL"], "A"],
-      ["Sara Mekonnen", "Product & Frontend", "Crafts clean, fast interfaces that turn complex workflows into simple experiences.", ["React", "UI/UX", "CSS"], "S"],
-      ["Daniel Bekele", "Backend & DevOps", "Builds reliable APIs and keeps our cloud infrastructure running smoothly at scale.", ["APIs", "Cloud", "DevOps"], "D"],
+      ["Sample Person", "Founder & Lead Engineer", "Full-stack architect focused on scalable systems and payment infrastructure.", ["Node.js", "TypeScript", "MySQL"], "A"],
+      ["Sample Person", "Product & Frontend", "Crafts clean, fast interfaces that turn complex workflows into simple experiences.", ["React", "UI/UX", "CSS"], "P"],
+      ["Sample Person", "Backend & DevOps", "Builds reliable APIs and keeps our cloud infrastructure running smoothly at scale.", ["APIs", "Cloud", "DevOps"], "D"],
     ];
     for (const [index, row] of team.entries()) {
       await tx.execute(
@@ -73,9 +73,9 @@ async function seed(db) {
     }
 
     const quotes = [
-      ["Maraki Tech delivered our payment platform ahead of schedule. Their attention to detail and communication were outstanding.", "Hanna Girma", "CEO, Addis Commerce", "H"],
-      ["We needed a custom business system fast. Maraki built exactly what we needed — clean, scalable, and easy to use.", "Michael Assefa", "Founder, Nile Logistics", "M"],
-      ["Their team feels like an extension of ours. Reliable, thoughtful, and genuinely invested in our success.", "Rahel Tadesse", "CTO, Sheba Fintech", "R"],
+      ["Sample quote — replace with a real one. {company} delivered our payment platform ahead of schedule.", "Sample Client", "CEO, Sample Company", "S"],
+      ["Sample quote — replace with a real one. They built exactly what we needed — clean, scalable, and easy to use.", "Sample Client", "Founder, Sample Company", "S"],
+      ["Sample quote — replace with a real one. Their team feels like an extension of ours.", "Sample Client", "CTO, Sample Company", "S"],
     ];
     for (const [index, row] of quotes.entries()) {
       await tx.execute(
@@ -98,8 +98,8 @@ async function seed(db) {
       ["What kind of projects do you take on?", "We build web applications, payment systems, business platforms, dashboards, APIs, and custom automation tools. If it's software that solves a real problem, we're interested."],
       ["How long does a typical project take?", "Small projects can be delivered in 1-2 weeks. Full-stack applications typically take 4-8 weeks depending on scope. We'll give you a clear timeline before we start."],
       ["Do you offer ongoing support?", "Yes. Every project includes a support period after launch, and we offer ongoing maintenance and scaling partnerships for clients who need long-term help."],
-      ["How do we get started?", "Reach out through the contact form or email us at hello@maraki.tech. We'll schedule a call to discuss your goals, timeline, and budget — no pressure, no obligation."],
-      ["Do you work with international clients?", "Absolutely. We work with clients across Africa, Europe, and North America. All communication is in English, and we're flexible with time zones."],
+      ["How do we get started?", "Reach out through the contact form or email us at {email}. We'll schedule a call to discuss your goals, timeline, and budget — no pressure, no obligation."],
+      ["Do you work with international clients?", "Absolutely. We work with clients around the world. All communication is in English, and we're flexible with time zones."],
     ];
     for (const [index, row] of faqs.entries()) {
       await tx.execute(

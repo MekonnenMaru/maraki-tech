@@ -9,6 +9,8 @@ const { DEFAULT_SETTINGS, GROUPS } = require("../settings");
 const { COLLECTIONS, sanitize, present, fail } = require("../content");
 const { limited, strike, clear } = require("../rate-limit");
 const config = require("../config");
+const { SESSION_COOKIE } = require("../storage-names");
+const { todayIn } = require("../time");
 const { siteUrl } = require("../views/html");
 const { privacySections, sectionPreview, normalizeStore, SECTION_IDS } = require("../views/privacy");
 const { PLATFORMS } = require("../social");
@@ -148,7 +150,7 @@ router.post("/login", async (req, res, next) => {
 
 router.post("/logout", (req, res) => {
   req.session.destroy(() => {
-    res.clearCookie("maraki.sid", { path: "/", httpOnly: true, sameSite: "lax" });
+    res.clearCookie(SESSION_COOKIE, { path: "/", httpOnly: true, sameSite: "lax" });
     res.json({ ok: true });
   });
 });
@@ -193,7 +195,7 @@ router.get("/dashboard", async (req, res, next) => {
     const messages = await db.messageCounts();
     const from = queryInstant(req.query.from);
     const to = queryInstant(req.query.to);
-    const visits = await db.visitStats({ from, to });
+    const visits = await db.visitStats({ from, to, zone: (await db.getSettings()).time_zone });
     const counts = {};
     for (const [name, spec] of Object.entries(COLLECTIONS)) {
       counts[name] = await db.countRows(spec.table);
@@ -239,14 +241,15 @@ function checkFormat(key, value) {
 // so its "Last updated" date moves to today automatically.
 const POLICY_KEYS = ["ga4_measurement_id", "google_ads_id", "adsense_client_id"];
 
-function today() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" }); // YYYY-MM-DD
+// Today in the company's time zone, "YYYY-MM-DD".
+async function today() {
+  return todayIn((await db.getSettings()).time_zone);
 }
 
 // Sets the Privacy Policy's "Last updated" date to today.
 async function touchPrivacyDate() {
   const store = normalizeStore(await db.getPrivacyOverrides());
-  store.updated = today();
+  store.updated = await today();
   await db.savePrivacyOverrides(store);
 }
 
@@ -324,7 +327,7 @@ function privacyChange(change) {
     try {
       const store = normalizeStore(await db.getPrivacyOverrides());
       await change(store, req);
-      store.updated = today();
+      store.updated = await today();
       await db.savePrivacyOverrides(store);
       res.json(await privacyState(req));
     } catch (error) {

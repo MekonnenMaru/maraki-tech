@@ -1,4 +1,4 @@
-// Maraki Tech admin — entry point.
+// Admin dashboard — entry point.
 //
 //   core/     shared building blocks (server calls, pop-ups, form fields, layout)
 //   config/   the sidebar menu and the editable lists with their fields
@@ -8,10 +8,10 @@
 // register it below, and add it to config/menu.js.
 import { api, whenSignedOut } from "./core/api.js";
 import { startActions, registerForms, registerActions } from "./core/actions.js";
-import { startShell, registerPage, registerListPage, showLogin, showApp, session, REMEMBERED_USER_KEY } from "./core/shell.js";
+import { startShell, registerPage, registerListPage, showLogin, showApp, session, REMEMBERED_USER_KEY, loadProfile } from "./core/shell.js";
 import { renderDashboard } from "./pages/dashboard.js";
 import { renderMessages } from "./pages/messages.js";
-import { renderSettings } from "./pages/settings.js";
+import { renderSettings, renderProfile } from "./pages/settings.js";
 import { renderList, isList } from "./pages/list.js";
 import { renderAccount } from "./pages/account.js";
 import { renderPrivacy } from "./pages/privacy.js";
@@ -20,6 +20,7 @@ import { toast, storage } from "./core/util.js";
 registerPage("dashboard", renderDashboard);
 registerPage("messages", renderMessages);
 registerPage("content", renderSettings);
+registerPage("profile", renderProfile);
 registerPage("account", renderAccount);
 registerPage("privacy", renderPrivacy);
 registerListPage(renderList, isList);
@@ -88,6 +89,7 @@ whenSignedOut(showLogin);
 async function start() {
   startActions();
   startShell();
+  await loadProfile(); // company name, logo and time zone
   try {
     const me = await api("/api/admin/me");
     session.username = me.username;

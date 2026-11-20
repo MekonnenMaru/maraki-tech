@@ -125,12 +125,12 @@ export const LISTS = {
       { key: "platform", label: "Platform", type: "choice", choicesFrom: "socialPlatforms" }, // list comes from the server (src/social.js)
       text("handle", "Username or link", {
         wide: true,
-        placeholder: "marakitech  or  https://…",
-        hint: "Just the name (e.g. marakitech) — the link is made for you. WhatsApp: leave empty to use your phone number from Site settings → Contact.",
+        placeholder: "yourcompany  or  https://…",
+        hint: "Just the name (e.g. yourcompany) — the link is made for you. WhatsApp: leave empty to use the phone number from the Company profile.",
       }),
       visible,
     ],
-    summary: (item) => item.url || (item.platform === "whatsapp" ? "Uses the phone number from Site settings → Contact" : ""),
+    summary: (item) => item.url || (item.platform === "whatsapp" ? "Uses the phone number from the Company profile" : ""),
     thumb: (item) => `<span class="row-thumb">${socialIcon(item.platform)}</span>`,
   },
   apps: {

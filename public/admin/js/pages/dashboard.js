@@ -2,13 +2,13 @@
 import { api } from "../core/api.js";
 import { esc, plural } from "../core/util.js";
 import { icon } from "../core/icons.js";
-import { rangePicker, rangeQuery, rangeLabel, isAllTime, nairobiNow } from "../core/date-range.js";
+import { rangePicker, rangeQuery, rangeLabel, isAllTime, zonedNow } from "../core/date-range.js";
 import { view, setUnread, session } from "../core/shell.js";
 import { LISTS } from "../config/lists.js";
 import { messagesTable, rememberMessages } from "./messages.js";
 
 function greeting() {
-  const hour = nairobiNow().hour;
+  const hour = zonedNow().hour;
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";
@@ -70,10 +70,16 @@ function checklist(s) {
       page: "account",
     },
     {
+      done: String(s.company_name || "").trim() !== "" && s.company_name !== "Your Company" && !!s.email && !!s.location,
+      title: "Company profile filled in",
+      hint: "Add your company name, email and location.",
+      page: "profile",
+    },
+    {
       done: !!s.phone && !placeholderPhone,
       title: "Real phone number",
-      hint: "The phone number is still the sample one.",
-      page: "content",
+      hint: "The phone number is missing or still the sample one.",
+      page: "profile",
     },
     {
       done: !/\.gif(\?|$)/i.test(s.hero_image || "") && !/giphy\.com/i.test(s.hero_image || ""),

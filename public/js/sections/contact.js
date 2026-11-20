@@ -133,7 +133,7 @@ export async function sendContactForm(form) {
     form.reset();
     trackLead();
     setButton("Message Sent ✓", { disabled: true });
-    showStatus("ok", form.dataset.success); // text from Site settings → Contact
+    showStatus("ok", form.dataset.success); // text from Site settings → Contact section
     setTimeout(done, 2200);
   } catch (error) {
     done();

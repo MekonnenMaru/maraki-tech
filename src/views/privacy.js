@@ -12,8 +12,22 @@
 //   - item              → bullet list
 //   **bold**            → bold
 //   [text](https://…)   → link (https://, mailto: or /page)
-//   {company} {email} {domain}  → filled in from Site settings (company name, contact email)
-const { esc, telHref, companyName, logoText } = require("./html");
+//   {company} {email} {domain}  → filled in from the Company profile
+const { esc, telHref, companyName, brandHtml } = require("./html");
+const names = require("../storage-names");
+
+const code = (name) => `<code>${esc(name)}</code>`;
+
+// The country is the last part of the Company profile location: "Addis Ababa, Ethiopia" → "Ethiopia".
+function countryOf(location) {
+  const parts = String(location || "").split(",").map((part) => part.trim()).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : "";
+}
+
+// Data protection laws named in "Your rights" when the company is in that country. Add more as needed.
+const PRIVACY_LAWS = {
+  Ethiopia: "the Personal Data Protection Proclamation No. 1321/2024",
+};
 
 const TEXT_UPDATED = "2026-11-20"; // last change to the default wording in this file (YYYY-MM-DD)
 
@@ -93,13 +107,13 @@ function contactHtml(s) {
 
 function storageTable(on, sessionHours) {
   const rows = [
-    ["<code>mt_seen</code>", "Cookie", "Counts your visit once, so reloading the page is not counted again. Contains no personal data.", "30 minutes", "Always"],
-    ["<code>mt_consent</code>", "Browser storage", "Remembers your choice on the cookie banner.", "Until you clear site data", "After you choose"],
-    ["<code>mt_attr</code>", "Browser storage (this tab)", "Remembers which ad or link brought you here, so it can be sent with the contact form.", "Until you close the tab", "Always"],
-    ["<code>maraki-theme</code>", "Browser storage", "Remembers light or dark mode.", "Until you clear site data", "If you switch the theme"],
-    ["<code>maraki.sid</code>", "Cookie", "Keeps our staff signed in to the admin area.", `${esc(sessionHours)} hours, or 30 days with “Remember me”`, "Staff only"],
-    ["<code>maraki-admin-username</code>", "Browser storage", "Remembers a staff member’s username (never the password).", "Until they sign in without “Remember me”", "Staff only"],
-    ["<code>maraki-settings-tab</code>", "Browser storage", "Remembers which settings tab a staff member had open.", "Until they clear site data", "Staff only"],
+    [code(names.VISIT_COOKIE), "Cookie", "Counts your visit once, so reloading the page is not counted again. Contains no personal data.", "30 minutes", "Always"],
+    [code(names.CONSENT_KEY), "Browser storage", "Remembers your choice on the cookie banner.", "Until you clear site data", "After you choose"],
+    [code(names.CAMPAIGN_KEY), "Browser storage (this tab)", "Remembers which ad or link brought you here, so it can be sent with the contact form.", "Until you close the tab", "Always"],
+    [code(names.THEME_KEY), "Browser storage", "Remembers light or dark mode.", "Until you clear site data", "If you switch the theme"],
+    [code(names.SESSION_COOKIE), "Cookie", "Keeps our staff signed in to the admin area.", `${esc(sessionHours)} hours, or 30 days with “Remember me”`, "Staff only"],
+    [code(names.ADMIN_USERNAME_KEY), "Browser storage", "Remembers a staff member’s username (never the password).", "Until they sign in without “Remember me”", "Staff only"],
+    [code(names.ADMIN_TAB_KEY), "Browser storage", "Remembers which settings tab a staff member had open.", "Until they clear site data", "Staff only"],
   ];
   if (on.analytics || on.ads) {
     rows.push(["Google cookies (e.g. <code>_ga</code>, <code>_gcl_au</code>)", "Cookie", `Measure visits${on.ads ? " and which Google ads lead to contact requests" : ""}.`, "Up to 2 years (set by Google)", "Only after you click <em>Accept</em>"]);
@@ -135,6 +149,7 @@ function defaultSections(s, { base, sessionHours }) {
   const on = servicesInUse(s);
   const cookies = on.analytics || on.ads;
   const google = [on.analytics && "Google Analytics", on.ads && "Google Ads", on.adsense && "Google AdSense"].filter(Boolean);
+  const country = countryOf(s.location);
   const https = base.startsWith("https://");
 
   const sections = [
@@ -253,7 +268,7 @@ function defaultSections(s, { base, sessionHours }) {
       id: "transfers",
       optional: google.length === 0,
       title: "Information stored outside your country",
-      text: `Our hosting provider${google.length ? " and Google" : ""} may store or process information on servers outside your country, including outside Ethiopia. When that happens, we choose providers that protect information with recognised safeguards.`,
+      text: `Our hosting provider${google.length ? " and Google" : ""} may store or process information on servers outside your country${country ? `, including outside ${country}` : ""}. When that happens, we choose providers that protect information with recognised safeguards.`,
     },
     {
       id: "security",
@@ -273,7 +288,7 @@ function defaultSections(s, { base, sessionHours }) {
         "- **Stop or limit** how we use your information, or object to it.",
         cookies && "- **Withdraw your consent** for cookies at any time: clear this site’s data and choose Essential only.",
         "",
-        "To use these rights, contact us using the details under “Contact us about privacy”. We may ask you to confirm who you are, and we will reply within 30 days. You can also complain to the data protection authority in your country. In Ethiopia, this is the authority responsible under the Personal Data Protection Proclamation No. 1321/2024.",
+        "To use these rights, contact us using the details under “Contact us about privacy”. We may ask you to confirm who you are, and we will reply within 30 days. You can also complain to the data protection authority in your country." + (PRIVACY_LAWS[country] ? ` In ${country}, this is the authority responsible under ${PRIVACY_LAWS[country]}.` : ""),
       ].filter((line) => line !== 0 && line !== false).join("\n"),
     },
     {
@@ -383,7 +398,7 @@ function sectionPreview(section, s, base) {
 function privacyPage(s, { base, sessionHours, overrides = {} }) {
   const values = placeholders(s, base);
   const company = esc(values.company);
-  const brand = esc(logoText(s));
+  const brand = brandHtml(s);
   const sections = privacySections(s, { base, sessionHours }, overrides).filter((section) => !section.hidden);
   const summary = sections.find((section) => section.id === "summary");
   const numbered = sections.filter((section) => section.id !== "summary");
@@ -400,7 +415,7 @@ function privacyPage(s, { base, sessionHours, overrides = {} }) {
   <script>
     (function () {
       try {
-        var saved = localStorage.getItem("maraki-theme");
+        var saved = localStorage.getItem("${names.THEME_KEY}");
         document.documentElement.dataset.theme = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
       } catch (e) {}
     })();
@@ -423,7 +438,6 @@ function privacyPage(s, { base, sessionHours, overrides = {} }) {
   <nav id="navbar" class="scrolled">
     <div class="nav-inner">
       <a href="/" class="logo">
-        <span class="logo-mark" aria-hidden="true"><span class="ring"></span><span class="dot"></span></span>
         ${brand}
       </a>
       <div class="nav-actions">

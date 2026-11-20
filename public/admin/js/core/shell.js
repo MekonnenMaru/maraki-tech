@@ -5,10 +5,50 @@ import { icon } from "./icons.js";
 import { registerActions } from "./actions.js";
 import { closeModal } from "./modal.js";
 import { MENU, pageLabel } from "../config/menu.js";
+import { setTimeZone } from "./date-range.js";
 
 const $ = (id) => document.getElementById(id);
 
 export const session = { username: "", mustChange: false, page: "dashboard" };
+
+/* ---------- Company profile (name, logo, time zone) ---------- */
+
+// Filled from /api/profile at start and after the Company profile is saved.
+export const profile = { company: "Your Company", logoText: "YOUR", logo: "" };
+
+function safeLogo(url) {
+  const value = String(url || "").trim();
+  return /^\/uploads\/[a-z0-9]+\.(png|jpe?g|webp|gif)$/i.test(value) || /^https:\/\/[^\s"'<>]+$/i.test(value) ? value : "";
+}
+
+// Puts the company name and logo into the sign-in page and the sidebar.
+function paintProfile() {
+  document.querySelectorAll("[data-company]").forEach((node) => (node.textContent = profile.company));
+  document.querySelectorAll("[data-company-short]").forEach((node) => (node.textContent = profile.logoText));
+  document.querySelectorAll(".brand").forEach((brand) => {
+    const mark = brand.querySelector(".logo-mark");
+    const text = brand.querySelector("[data-company-short]");
+    brand.querySelector(".brand-logo")?.remove();
+    if (mark) mark.hidden = !!profile.logo;
+    if (text) text.hidden = !!profile.logo;
+    if (profile.logo) brand.insertAdjacentHTML("afterbegin", `<img class="brand-logo" src="${esc(profile.logo)}" alt="${esc(profile.company)}">`);
+  });
+  const icon = document.querySelector('link[rel="icon"]');
+  if (icon) icon.href = profile.logo || "/favicon.svg";
+}
+
+export async function loadProfile() {
+  try {
+    const data = await (await fetch("/api/profile")).json();
+    profile.company = String(data.company_name || "").trim() || "Your Company";
+    profile.logoText = profile.company.split(/\s+/)[0].toUpperCase();
+    profile.logo = safeLogo(data.logo_image);
+    setTimeZone(data.time_zone || "UTC");
+  } catch {
+    /* keep the defaults */
+  }
+  paintProfile();
+}
 
 const pages = {}; // page id → render function
 let listPage = null; // one render function shared by every list (services, faqs, …)
@@ -31,7 +71,7 @@ export function view() {
 /* ---------- Screens ---------- */
 
 // The username saved by "Remember me" (only the username — never the password).
-export const REMEMBERED_USER_KEY = "maraki-admin-username";
+export const REMEMBERED_USER_KEY = "admin_username"; // also listed in src/storage-names.js
 
 export function showLogin() {
   closeModal();
@@ -112,7 +152,7 @@ export async function go(id) {
     item.classList.toggle("active", item.dataset.page === id);
   });
   $("pageTitle").textContent = pageLabel(id);
-  document.title = `${pageLabel(id)} — Maraki Admin`;
+  document.title = `${pageLabel(id)} — ${profile.company} Admin`;
   closeSidebar();
   closeModal();
 
@@ -139,7 +179,7 @@ export async function go(id) {
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  storage.set("maraki-theme", theme);
+  storage.set("theme", theme);
   const button = $("themeToggle");
   button.innerHTML = icon(theme === "dark" ? "sun" : "moon");
   button.setAttribute("aria-label", `Switch to ${theme === "dark" ? "light" : "dark"} theme`);

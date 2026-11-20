@@ -1,10 +1,10 @@
 // Social media links (admin menu → Social links). Each row in the database has:
 //   platform  facebook | instagram | … | other
-//   handle    a username ("marakitech"), or a full link ("https://…")
+//   handle    a username ("yourcompany"), or a full link ("https://…")
 //   visible   on/off
 //
 // From a username the link is built with the pattern below, so every network can have
-// its own username. WhatsApp with an empty handle uses the phone number from Contact details.
+// its own username. WhatsApp with an empty handle uses the phone number from the Company profile.
 // "Other" needs a full link (for example Behance or a second website).
 //
 // To add a platform: add it here and add its icon in public/js/lib/social-icons.js.
@@ -22,7 +22,10 @@ const PLATFORMS = [
   { id: "other", label: "Other link", link: null },
 ];
 
-const DEFAULT_USERNAME = "marakitech";
+// The starting username, made from the company name: "Maraki Tech" → "marakitech".
+function usernameFrom(companyName) {
+  return String(companyName || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 60) || "yourcompany";
+}
 const USERNAME = /^[A-Za-z0-9._-]{1,60}$/;
 const FULL_LINK = /^https:\/\/[^\s"'<>]{4,290}$/i;
 
@@ -49,7 +52,7 @@ function checkSocialRow(row) {
   if (platform.id === "other") badInput("For “Other link”, paste the full link, starting with https://");
   if (platform.id === "whatsapp") {
     if (handle && (digits(handle).length < 8 || digits(handle).length > 15)) {
-      badInput("For WhatsApp, type the phone number with country code (e.g. +251 91 234 5678), or leave it empty to use the phone from Contact details.");
+      badInput("For WhatsApp, type the phone number with country code (e.g. +44 7700 900123), or leave it empty to use the phone from the Company profile.");
     }
     return row;
   }
@@ -57,7 +60,7 @@ function checkSocialRow(row) {
   return row;
 }
 
-// The link for one row. `phone` (from Contact details) is used by WhatsApp with an empty handle.
+// The link for one row. `phone` (from the Company profile) is used by WhatsApp with an empty handle.
 function linkFor(row, phone = "") {
   const platform = platformOf(row.platform);
   const handle = String(row.handle || "").trim();
@@ -88,4 +91,4 @@ function socialLinks(rows, settings) {
     .filter((item) => item.url);
 }
 
-module.exports = { PLATFORMS, DEFAULT_USERNAME, checkSocialRow, linkFor, labelFor, socialLinks };
+module.exports = { PLATFORMS, usernameFrom, checkSocialRow, linkFor, labelFor, socialLinks };

@@ -20,8 +20,9 @@ async function init() {
   await schema.createTables();
   await schema.addMissingColumns();
   await schema.renameOldSettings();
+  await schema.keepEarlierBehaviour(); // before seed: tells an existing site from a new one
   await seed(connection);
-  await schema.addMissingApps();
+  await schema.addSampleApps();
   await schema.addDefaultSocialLinks();
   await schema.createFirstAdmin();
   ready = true;

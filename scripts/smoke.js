@@ -29,7 +29,7 @@ async function main() {
       name: "Test Visitor",
       email: "visitor@example.com",
       company: "Example Co",
-      country: "Ethiopia",
+      country: "Example Country",
       service: "Software Development",
       message: "We need a payment dashboard for our stores.",
     }),
@@ -110,7 +110,7 @@ async function main() {
 
   const admin = await fetch(`${base}/admin`);
   const adminHtml = await admin.text();
-  console.log("admin page", admin.status, adminHtml.includes("Maraki Admin"));
+  console.log("admin page", admin.status, adminHtml.includes(`id="loginForm"`));
 }
 
 main().catch((error) => {

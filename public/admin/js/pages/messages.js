@@ -5,7 +5,7 @@ import { icon } from "../core/icons.js";
 import { registerActions } from "../core/actions.js";
 import { openModal, closeModal, confirmDialog, modalElement } from "../core/modal.js";
 import { rangePicker, rangeQuery, formatWhen } from "../core/date-range.js";
-import { view, setUnread, session, go } from "../core/shell.js";
+import { view, setUnread, session, go, profile } from "../core/shell.js";
 
 const inbox = {
   status: "all", // all | unread | read
@@ -208,7 +208,7 @@ function openMessageWindow(message) {
       <button class="btn danger ghost" type="button" data-action="delete-message" data-id="${message.id}">${icon("trash")}Delete</button>
       <span class="spacer"></span>
       <button class="btn ghost" type="button" data-action="toggle-read" data-id="${message.id}">${message.is_read ? "Mark as new" : "Mark as read"}</button>
-      <a class="btn primary" href="mailto:${esc(message.email)}?subject=${encodeURIComponent("Re: your message to Maraki Tech")}">${icon("mail")}Reply</a>
+      <a class="btn primary" href="mailto:${esc(message.email)}?subject=${encodeURIComponent(`Re: your message to ${profile.company}`)}">${icon("mail")}Reply</a>
     </div>
   `,
     { size: "wide" }

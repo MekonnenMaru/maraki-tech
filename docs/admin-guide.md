@@ -11,7 +11,8 @@ Changes appear on the website after a refresh. You don't need any code.
 | --- | --- |
 | **Overview** | Visits, new messages, the *Ready for Google Ads* checklist, latest leads |
 | **Inbox** | Messages from the contact form |
-| **Site settings** | All texts, links, images, contact details, section on/off switches, Google IDs |
+| **Company profile** | Company name, logo, email, phone, location, time zone — used everywhere |
+| **Site settings** | All texts, links, images, section on/off switches, Google IDs |
 | **Privacy policy** | The full text of your Privacy Policy page, section by section |
 | **Social links** | The social media icons in the footer (one row per network) |
 | **Stats, Services, Products, Pricing** | The cards on the page |
@@ -21,6 +22,19 @@ Changes appear on the website after a refresh. You don't need any code.
 
 ---
 
+## Company profile
+
+Menu → **Company profile**. Fill this in first — the whole site uses it:
+
+| Field | Used for |
+| --- | --- |
+| **Company name** | Logo text (first word in capitals) when there's no logo image, footer, browser tab, Google, privacy policy, dashboard |
+| **Logo** | Upload a PNG or WebP (transparent background, under 2 MB). Replaces the round mark + name in the header, footer, privacy page, dashboard and the browser tab icon |
+| **Email / Phone / Location** | Contact section, footer, privacy policy, Google business details. Phone is also used for the WhatsApp link. The country (last part of the location) is used in the privacy policy |
+| **Time zone** | The clock on the website, visit counts and dates in the dashboard |
+
+The **Overview** checklist shows *Company profile filled in* until name, email and location are set.
+
 ## Site settings
 
 The settings are in tabs:
@@ -28,11 +42,11 @@ The settings are in tabs:
 | Tab | Contains |
 | --- | --- |
 | **Visibility** | Switch whole sections on or off. A hidden section also leaves the menu and footer. |
-| **Brand and SEO** | Company name (used everywhere; the logo shows its first word), plus the optional page title and description for Google |
+| **Google & browser tab** | The optional page title and description for Google |
 | **Hero** | The first screen: headline, text, buttons, image |
 | **Navigation** | Menu labels |
 | **Section headings** | The small label, title and text above each section |
-| **Contact** | Email, phone (also used for WhatsApp), location, the text beside the form, the form button and the “message sent” text |
+| **Contact section** | The text beside the form, the form button and the “message sent” text |
 | **Call to action** | The banner above the footer |
 | **Footer** | Short description and the three column titles. Footer links reuse your menu and section names. |
 | **Cookie banner** | Banner text and button names (the banner only shows when a Google ID is filled in) |
@@ -42,7 +56,7 @@ The settings are in tabs:
 and put the green words in the *highlight* box.
 Example: title `Technology {highlight} business forward.` + highlight `that moves`.
 
-**Your details inside any text:** write `{company}`, `{email}`, `{phone}` or `{location}` in any text on the site
+**Your details inside any text** (from the Company profile): write `{company}`, `{email}`, `{phone}` or `{location}` in any text on the site
 (for example an FAQ answer “Email us at {email}”). It's replaced with your current Site settings,
 so when your email changes, every text changes with it.
 

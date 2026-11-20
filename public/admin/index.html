@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Maraki Admin</title>
+  <title>Admin</title>
   <meta name="robots" content="noindex" />
   <link rel="icon" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -14,7 +14,7 @@
     // Apply the saved light/dark theme before the page paints (no flash).
     (function () {
       try {
-        var saved = localStorage.getItem("maraki-theme");
+        var saved = localStorage.getItem("theme");
         document.documentElement.dataset.theme =
           saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
       } catch (e) {}
@@ -31,7 +31,7 @@
       <form class="login-card" data-form="login" id="loginForm">
         <div class="brand">
           <span class="logo-mark" aria-hidden="true"><span class="ring"></span><span class="dot"></span></span>
-          <span>MARAKI <small>Tech</small></span>
+          <span data-company-short></span>
         </div>
 
         <div class="login-head">
@@ -60,7 +60,7 @@
 
       <footer class="login-foot">
         <a href="/">← Back to website</a>
-        <span>© <span id="loginYear"></span> Maraki Tech</span>
+        <span>© <span id="loginYear"></span> <span data-company></span></span>
       </footer>
     </div>
   </main>
@@ -70,7 +70,7 @@
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="#dashboard" data-action="go" data-page="dashboard">
         <span class="logo-mark" aria-hidden="true"><span class="ring"></span><span class="dot"></span></span>
-        <span>MARAKI <small>Admin</small></span>
+        <span><span data-company-short></span> <small>Admin</small></span>
       </a>
       <nav class="menu" id="menu" aria-label="Admin pages"></nav>
       <div class="sidebar-foot">

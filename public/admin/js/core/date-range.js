@@ -1,11 +1,21 @@
-// The "Date" filter used on the Overview and Inbox pages.
-// All days run midnight to midnight in Nairobi time (EAT, UTC+3).
+// The "Date" filter used on the Overview and Inbox pages, and date formatting.
+// Days run midnight to midnight in the company's time zone (Company profile → Time zone).
 import { esc } from "./util.js";
 import { icon } from "./icons.js";
 import { openModal, closeModal, modalElement } from "./modal.js";
 import { registerChanges, registerForms } from "./actions.js";
 
-export const ZONE = "Africa/Nairobi";
+let ZONE = "UTC";
+
+// Called at start-up with the Company profile's time zone.
+export function setTimeZone(zone) {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: zone });
+    ZONE = zone;
+  } catch {
+    ZONE = "UTC";
+  }
+}
 
 const OPTIONS = [
   ["all", "All time"],
@@ -26,9 +36,9 @@ const WEEKDAY = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
 const range = { preset: "all", from: "", to: "" };
 let reload = () => {};
 
-/* ---------- Date math (in Nairobi time) ---------- */
+/* ---------- Date math (in the company's time zone) ---------- */
 
-export function nairobiNow(date = new Date()) {
+export function zonedNow(date = new Date()) {
   const parts = {};
   new Intl.DateTimeFormat("en-US", {
     timeZone: ZONE,
@@ -57,8 +67,18 @@ function addDays(day, count) {
   return { year: utc.getUTCFullYear(), month: utc.getUTCMonth() + 1, day: utc.getUTCDate() };
 }
 
+// How far the time zone is ahead of UTC at a moment, in milliseconds.
+function zoneOffset(ms) {
+  const p = zonedNow(new Date(ms));
+  const minute = Number(new Intl.DateTimeFormat("en-US", { timeZone: ZONE, minute: "2-digit" }).format(new Date(ms)));
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, minute) - Math.floor(ms / 60000) * 60000;
+}
+
+// The moment a calendar day starts (00:00) in the time zone.
 function midnight(day) {
-  return new Date(Date.UTC(day.year, day.month - 1, day.day) - 3 * 60 * 60 * 1000);
+  const guess = Date.UTC(day.year, day.month - 1, day.day);
+  const first = guess - zoneOffset(guess);
+  return new Date(guess - zoneOffset(first)); // second pass handles daylight-saving changes
 }
 
 function parseDay(value) {
@@ -74,7 +94,7 @@ const dayNumber = (day) => day.year * 10000 + day.month * 100 + day.day;
 const pad = (n) => String(n).padStart(2, "0");
 
 function todayText() {
-  const today = nairobiNow();
+  const today = zonedNow();
   return `${today.year}-${pad(today.month)}-${pad(today.day)}`;
 }
 
@@ -92,7 +112,7 @@ export function formatWhen(iso) {
 
 // Returns { from, to } as ISO strings, null for "All time", or { pending: true }.
 export function rangeQuery() {
-  const today = nairobiNow();
+  const today = zonedNow();
   const span = (start, end) => ({ from: midnight(start).toISOString(), to: midnight(end).toISOString() });
   const weekStart = addDays(today, -WEEKDAY[today.weekday]);
 

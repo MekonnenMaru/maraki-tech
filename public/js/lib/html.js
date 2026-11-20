@@ -68,14 +68,21 @@ export function sectionHeading(label, title, highlight, text) {
   `;
 }
 
-// The company name from Site settings ("Maraki Tech").
+// The company name from the Company profile.
 export function companyName(s) {
-  return String(s.company_name || "").trim() || "Maraki Tech";
+  return String(s.company_name || "").trim() || "Your Company";
 }
 
-// The logo shows the first word of the company name in capitals: "Maraki Tech" → "MARAKI".
+// Without a logo image: the first word of the company name in capitals ("Acme Software" → "ACME").
 export function logoText(s) {
   return companyName(s).split(/\s+/)[0].toUpperCase();
+}
+
+// The logo from the Company profile, or the round mark + logo text when there is no image.
+export function brandHtml(s) {
+  const logo = safeSrc(s.logo_image);
+  if (logo) return `<img class="brand-logo" src="${esc(logo)}" alt="${esc(companyName(s))}">`;
+  return `${logoMark()}${esc(logoText(s))}`;
 }
 
 // Lets any text on the site use {company}, {email}, {phone} and {location}
