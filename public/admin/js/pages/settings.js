@@ -47,12 +47,12 @@ function groupHtml(group, settings, active) {
           ${group.intro ? `<p class="muted">${esc(group.intro)}</p>` : ""}
         </div>
       </div>
-      ${toggles.length ? `<div class="switch-grid">${toggles.map((field) => prepare(field, settings)).join("")}</div>` : ""}
       ${others.length
         ? group.id === "sections"
           ? sectionBlocks(others, settings)
           : `<div class="form-grid">${others.map((field) => prepare(field, settings)).join("")}</div>`
         : ""}
+      ${toggles.length ? `<div class="switch-grid">${toggles.map((field) => prepare(field, settings)).join("")}</div>` : ""}
     </section>
   `;
 }

@@ -119,13 +119,13 @@ export function trackLead() {
   if (ids.adsId && ids.adsLabel) window.gtag("event", "conversion", { send_to: `${ids.adsId}/${ids.adsLabel}` });
 }
 
-// Phone, email and Telegram links count as contact attempts too.
+// Phone, email, Telegram and WhatsApp links count as contact attempts too.
 function trackContactClicks() {
   document.addEventListener("click", (event) => {
-    const link = event.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="t.me/"]');
+    const link = event.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="t.me/"], a[href*="wa.me/"]');
     if (!link || !gtagReady()) return;
     const href = link.getAttribute("href");
-    const method = href.startsWith("tel:") ? "phone" : href.startsWith("mailto:") ? "email" : "telegram";
+    const method = href.startsWith("tel:") ? "phone" : href.startsWith("mailto:") ? "email" : href.includes("wa.me/") ? "whatsapp" : "telegram";
     window.gtag("event", "contact_click", { method });
   });
 }

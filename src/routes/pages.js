@@ -6,6 +6,7 @@ const db = require("../db");
 const config = require("../config");
 const { esc: escAttr, siteUrl, companyName } = require("../views/html");
 const { privacyPage } = require("../views/privacy");
+const { socialLinks } = require("../social");
 
 const router = express.Router();
 const publicDir = path.join(__dirname, "..", "..", "public");
@@ -31,9 +32,8 @@ function previewImage(s, base) {
 
 // Business details Google can read (schema.org Organization).
 function organizationJson(s, base) {
-  const socials = [s.social_x, s.social_linkedin, s.social_github, s.social_telegram].filter((url) =>
-    /^https:\/\//i.test(url || "")
-  );
+  // Social profiles (WhatsApp is a chat link, not a profile).
+  const socials = socialLinks(s).filter((item) => item.id !== "whatsapp").map((item) => item.url);
   const data = {
     "@context": "https://schema.org",
     "@type": "Organization",

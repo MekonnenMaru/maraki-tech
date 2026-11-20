@@ -13,7 +13,7 @@ for things like "software company Addis Ababa". You pay when someone clicks.
 | --- | --- |
 | **Conversion tracking** | When someone sends the contact form, Google Ads counts a "conversion". You see which ads bring real leads. |
 | **Click ID saved with each lead** | Each lead in the **Inbox** shows "Google Ads" and the click ID, so you know it came from an ad. |
-| **Phone, email and Telegram clicks** | Counted in Google Analytics as `contact_click`. |
+| **Phone, email, Telegram and WhatsApp clicks** | Counted in Google Analytics as `contact_click`. |
 | **Cookie banner + Consent Mode v2** | Google tags load only after a visitor clicks **Accept**. |
 | **Google-friendly page** | Title, description, preview image and business details are in the HTML. |
 | **Launch checklist** | Admin → **Overview** → *Ready for Google Ads* shows what is still missing. |

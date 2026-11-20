@@ -1,5 +1,6 @@
 // The closing call-to-action banner and the page footer.
 import { esc, safeHref, externalAttrs, richTitle, logoMark, logoText, companyName } from "../lib/html.js";
+import { socialIcon } from "../lib/social-icons.js";
 
 export function ctaHtml(s) {
   const href = safeHref(s.cta_button_href, "#contact");
@@ -30,32 +31,26 @@ function linkColumn(title, links) {
   `;
 }
 
-function socialLinks(s) {
-  const socials = [
-    [s.social_x, "X", "𝕏"],
-    [s.social_linkedin, "LinkedIn", "in"],
-    [s.social_github, "GitHub", "⌨"],
-    [s.social_telegram, "Telegram", "✈"],
-  ].filter(([url]) => safeHref(url));
-
-  if (!socials.length) return "";
+// social = [{ id, label, url }] — built by the server (src/social.js) from one username.
+function socialLinks(social = []) {
+  const links = social.filter((item) => /^https:\/\//i.test(item.url || ""));
+  if (!links.length) return "";
   return `
     <div class="footer-socials">
-      ${socials.map(([url, name, icon]) => {
-        const href = safeHref(url, "#");
-        return `<a class="footer-social" href="${esc(href)}" title="${name}"${externalAttrs(href)}>${icon}</a>`;
-      }).join("")}
+      ${links.map((item) => `
+        <a class="footer-social" href="${esc(item.url)}" title="${esc(item.label)}" aria-label="${esc(item.label)}"${externalAttrs(item.url)}>${socialIcon(item.id)}</a>
+      `).join("")}
     </div>
   `;
 }
 
-export function footerHtml(s, show) {
+export function footerHtml(s, show, social) {
   return `
     <div class="footer-grid">
       <div class="footer-col">
         <div class="footer-logo">${logoMark()}${esc(logoText(s))}</div>
         ${s.footer_blurb ? `<p>${esc(s.footer_blurb)}</p>` : ""}
-        ${socialLinks(s)}
+        ${socialLinks(social)}
       </div>
       ${linkColumn("Product", [
         { show: show.solutions, href: "#solutions", label: s.nav_solutions },

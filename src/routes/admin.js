@@ -223,6 +223,7 @@ const FORMATS = {
   google_ads_id: [/^AW-\d{6,15}$/, "The Google Ads ID looks like AW-123456789."],
   google_ads_conversion_label: [/^[\w-]{6,40}$/, "The conversion label is the short code after the slash, e.g. AbC-D_efG12."],
   adsense_client_id: [/^ca-pub-\d{10,20}$/, "The AdSense publisher ID looks like ca-pub-1234567890123456."],
+  social_username: [/^[A-Za-z0-9._-]{1,60}$/, "The social media username can only use letters, numbers, dots, dashes and underscores (no spaces or links)."],
 };
 
 function checkFormat(key, value) {
@@ -260,6 +261,7 @@ router.put("/settings", async (req, res, next) => {
       if (value.length > 2000) fail(400, `${key.replace(/_/g, " ")} is too long.`);
       if (key === "ga4_measurement_id" || key === "google_ads_id") value = value.toUpperCase();
       if (key === "adsense_client_id") value = value.toLowerCase();
+      if (key === "social_username") value = value.replace(/^@/, "");
       checkFormat(key, value);
       values[key] = value;
     }

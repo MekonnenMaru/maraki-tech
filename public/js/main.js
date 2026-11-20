@@ -55,7 +55,7 @@ function renderPage(data) {
   document.getElementById("brandLockup").innerHTML = `${logoMark()}${esc(logoText(s))}`;
   document.getElementById("navLinks").innerHTML = navHtml(s, show);
   document.getElementById("page").innerHTML = sections.filter(Boolean).join("");
-  document.getElementById("footer").innerHTML = footerHtml(s, show);
+  document.getElementById("footer").innerHTML = footerHtml(s, show, data.social);
 
   mountAppsModal(s, apps);
   startHeroClock();

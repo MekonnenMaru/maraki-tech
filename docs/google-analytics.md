@@ -25,7 +25,7 @@ Analytics loads only for visitors who click **Accept** on the cookie banner.
 | --- | --- |
 | `page_view` | A visitor opens the site (automatic) |
 | `generate_lead` | The contact form was sent successfully |
-| `contact_click` | A visitor clicked the phone number, email or Telegram link (`method` = phone / email / telegram) |
+| `contact_click` | A visitor clicked the phone number, email, Telegram or WhatsApp link (`method` = phone / email / telegram / whatsapp) |
 
 ### Mark leads as important
 

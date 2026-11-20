@@ -199,7 +199,7 @@ function defaultSections(s, { base, sessionHours }) {
             "",
             on.analytics && "- **Google Analytics 4** shows us how many people visit, from which countries and devices, and which pages they use. IP addresses are anonymised.",
             on.ads && "- **Google Ads** tells us when someone who clicked one of our ads sends the contact form, so we know which ads work.",
-            "- We also count clicks on our phone, email and Telegram links as contact attempts.",
+            "- We also count clicks on our phone, email, Telegram and WhatsApp links as contact attempts.",
             "",
             "Google processes this data under [Google’s Privacy Policy](https://policies.google.com/privacy).",
           ].filter((line) => line !== false).join("\n"),

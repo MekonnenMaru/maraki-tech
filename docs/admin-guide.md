@@ -33,7 +33,7 @@ The settings are in tabs:
 | **Section headings** | The small label, title and text above each section |
 | **Contact details** | Email, phone, location shown by the form and in the footer |
 | **Call to action** | The banner above the footer |
-| **Footer and social** | Footer text and social links (empty = icon hidden) |
+| **Footer and social** | Footer text, one social media username (default `marakitech`) and an on/off switch for each network: Facebook, Instagram, TikTok, YouTube, LinkedIn, X, Telegram, WhatsApp (uses your phone number), GitHub |
 | **Google Ads, AdSense & Analytics** | IDs from Google. See the guides in this folder. |
 
 **Green words in titles:** write `{highlight}` in the title where the green words go,

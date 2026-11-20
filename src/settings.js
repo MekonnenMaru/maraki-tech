@@ -1,3 +1,5 @@
+const { NETWORKS } = require("./social");
+
 function field(key, label, type = "text", extra = {}) {
   return { key, label, type, ...extra };
 }
@@ -128,13 +130,14 @@ const GROUPS = [
   {
     id: "footer",
     title: "Footer and social",
-    intro: "Leave a social link empty to hide that icon.",
+    intro: "Social links are made from one username. Switch off any network you don’t use.",
     fields: [
       field("footer_blurb", "Short description", "textarea"),
-      field("social_x", "X / Twitter URL", "text", { placeholder: "https://" }),
-      field("social_linkedin", "LinkedIn URL", "text", { placeholder: "https://" }),
-      field("social_github", "GitHub URL", "text", { placeholder: "https://" }),
-      field("social_telegram", "Telegram URL", "text", { placeholder: "https://" }),
+      field("social_username", "Social media username", "text", {
+        placeholder: "marakitech",
+        hint: "The same name on every network, e.g. facebook.com/marakitech. WhatsApp uses the phone number from Contact details.",
+      }),
+      ...NETWORKS.map((network) => field(`show_social_${network.id}`, network.label, "toggle")),
     ],
   },
   {
@@ -270,10 +273,8 @@ const DEFAULT_SETTINGS = {
 
   footer_blurb:
     "Technology that moves business forward. We build modern software, payment solutions, and digital products from Ethiopia.",
-  social_x: "",
-  social_linkedin: "",
-  social_github: "",
-  social_telegram: "",
+  social_username: "marakitech",
+  ...Object.fromEntries(NETWORKS.map((network) => [`show_social_${network.id}`, "1"])),
 
   ga4_measurement_id: "",
   google_ads_id: "",

@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("../db");
 const { COLLECTIONS, present, fail } = require("../content");
+const { socialLinks } = require("../social");
 const { limited, strike } = require("../rate-limit");
 
 const router = express.Router();
@@ -80,7 +81,8 @@ router.get("/content", async (req, res, next) => {
       res.append("Set-Cookie", "mt_seen=1; Max-Age=1800; Path=/; HttpOnly; SameSite=Lax");
     }
 
-    const payload = { settings: await db.getSettings() };
+    const settings = await db.getSettings();
+    const payload = { settings, social: socialLinks(settings) };
     for (const [name, spec] of Object.entries(COLLECTIONS)) {
       const rows = await db.listRows(spec.table, { visibleOnly: true });
       payload[name] = rows.map((row) => present(name, row));
