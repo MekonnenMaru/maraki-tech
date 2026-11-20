@@ -42,8 +42,7 @@ function statusChips(section) {
   if (section.custom) chips.push('<span class="chip">Your section</span>');
   else if (section.edited) chips.push('<span class="chip chip-warn">Edited</span>');
   else chips.push('<span class="chip chip-green">Automatic</span>');
-  if (section.hidden) chips.push('<span class="chip chip-muted">Hidden</span>');
-  return chips.join("");
+  return chips.join(""); // hidden/shown is shown by the on/off switch
 }
 
 function sectionRow(section, index, label) {
