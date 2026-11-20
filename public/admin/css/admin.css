@@ -379,6 +379,20 @@ input:focus, select:focus, textarea:focus {
 textarea.long-text { line-height: 1.65; min-height: 280px; }
 .modal-note { margin: -8px 0 18px; }
 
+/* Read-only preview of automatic content (privacy cookie table, contact details) */
+.auto-preview {
+  max-height: 340px; overflow: auto; padding: 4px 14px;
+  border: 1px dashed var(--line-strong); border-radius: var(--radius-sm);
+  background: var(--surface-2); color: var(--muted); font-size: 0.86rem;
+}
+.auto-preview p { margin: 10px 0; }
+.auto-preview a { color: var(--brand); }
+.auto-preview table { width: 100%; border-collapse: collapse; margin: 6px 0; }
+.auto-preview th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text); }
+.auto-preview th, .auto-preview td { padding: 8px 8px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.auto-preview tr:last-child td { border-bottom: 0; }
+.auto-preview code { font-size: 0.82rem; }
+
 /* Small "How to …" help box */
 .help { margin-top: 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
 .help summary { cursor: pointer; font-weight: 600; color: var(--muted); }

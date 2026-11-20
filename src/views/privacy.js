@@ -99,6 +99,7 @@ function storageTable(on, sessionHours) {
     ["<code>maraki-theme</code>", "Browser storage", "Remembers light or dark mode.", "Until you clear site data", "If you switch the theme"],
     ["<code>maraki.sid</code>", "Cookie", "Keeps our staff signed in to the admin area.", `${esc(sessionHours)} hours, or 30 days with “Remember me”`, "Staff only"],
     ["<code>maraki-admin-username</code>", "Browser storage", "Remembers a staff member’s username (never the password).", "Until they sign in without “Remember me”", "Staff only"],
+    ["<code>maraki-settings-tab</code>", "Browser storage", "Remembers which settings tab a staff member had open.", "Until they clear site data", "Staff only"],
   ];
   if (on.analytics || on.ads) {
     rows.push(["Google cookies (e.g. <code>_ga</code>, <code>_gcl_au</code>)", "Cookie", `Measure visits${on.ads ? " and which Google ads lead to contact requests" : ""}.`, "Up to 2 years (set by Google)", "Only after you click <em>Accept</em>"]);

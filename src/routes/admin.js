@@ -291,6 +291,7 @@ async function privacyState(req) {
     hidden: section.hidden,
     custom: section.custom,
     hasAuto: !!section.auto,
+    autoHtml: section.auto || "", // the part added automatically (cookie table, contact details) — shown read-only
     preview: sectionPreview(section, settings, base),
     // Short plain-text preview for the list (placeholders filled in, no tables).
     snippet: sectionPreview({ ...section, auto: "" }, settings, base)

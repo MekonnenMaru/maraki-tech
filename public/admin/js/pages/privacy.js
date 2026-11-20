@@ -127,10 +127,11 @@ async function refresh() {
 
 function openEditor(section) {
   const isNew = !section;
-  const autoNote = section && {
-    who: "Your email, phone and location are added automatically below this text.",
-    contact: "Your email, phone and location are shown automatically. Text you write here appears above them.",
-    cookies: "The cookie table is added automatically below this text, so it always matches the website.",
+  // Where the automatic part (shown read-only under the text) comes from.
+  const autoSource = section && {
+    who: "From Site settings → Contact details. Change them there.",
+    contact: "From Site settings → Contact details. Change them there.",
+    cookies: "Made from what the website really stores. It updates itself, for example when you add a Google ID.",
   }[section.id];
   const note = isNew
     ? "Your own section. It appears just before “Contact us about privacy”; move it with the arrows afterwards."
@@ -151,9 +152,14 @@ function openEditor(section) {
         </div>
         <div class="field">
           <label for="ps-text">Text</label>
-          <textarea id="ps-text" name="text" rows="14" class="long-text">${isNew ? "" : esc(section.text)}</textarea>
-          ${autoNote ? `<small>${esc(autoNote)}</small>` : ""}
+          <textarea id="ps-text" name="text" rows="${section?.autoHtml ? 4 : 14}" class="${section?.autoHtml ? "" : "long-text"}">${isNew ? "" : esc(section.text)}</textarea>
         </div>
+        ${section?.autoHtml ? `
+          <div class="field">
+            <label>Shown below your text (automatic)</label>
+            <div class="auto-preview">${section.autoHtml}</div>
+            ${autoSource ? `<small>${esc(autoSource)}</small>` : ""}
+          </div>` : ""}
       </div>
       ${FORMAT_HELP}
       <p class="form-error" role="alert"></p>
