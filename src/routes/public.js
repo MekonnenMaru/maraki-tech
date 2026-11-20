@@ -1,6 +1,6 @@
 const express = require("express");
 const db = require("../db");
-const { COLLECTIONS, present } = require("../content");
+const { COLLECTIONS, present, fail } = require("../content");
 const { limited, strike } = require("../rate-limit");
 
 const router = express.Router();
@@ -17,75 +17,40 @@ function clip(value, max) {
     .slice(0, max);
 }
 
+// Text fields from the contact form and their maximum length.
+const FIELDS = {
+  name: 80,
+  email: 160,
+  company: 120,
+  service: 120,
+  message: 4000,
+  country: 80,
+  city: 80,
+  phone: 40,
+  source: 40,
+  utm_source: 120,
+  utm_medium: 120,
+  utm_campaign: 160,
+  utm_term: 160,
+  utm_content: 160,
+  gclid: 200,
+  landing_page: 500,
+  referrer: 500,
+};
+
+// Trims every field, then checks the required ones. Throws a 400 error with a friendly message.
 function cleanMessage(body) {
-  const name = clip(body.name, 80);
-  const email = clip(body.email, 160).toLowerCase();
-  const company = clip(body.company, 120);
-  const service = clip(body.service, 120);
-  const message = clip(body.message, 4000);
-  const country = clip(body.country, 80);
-  const city = clip(body.city, 80);
-  const phone = clip(body.phone, 40);
-  const source = clip(body.source, 40).toLowerCase() || "direct";
-  const utm_source = clip(body.utm_source, 120);
-  const utm_medium = clip(body.utm_medium, 120);
-  const utm_campaign = clip(body.utm_campaign, 160);
-  const utm_term = clip(body.utm_term, 160);
-  const utm_content = clip(body.utm_content, 160);
-  const gclid = clip(body.gclid, 200);
-  const landing_page = clip(body.landing_page, 500);
-  const referrer = clip(body.referrer, 500);
+  const message = {};
+  for (const [key, max] of Object.entries(FIELDS)) message[key] = clip(body[key], max);
+  message.email = message.email.toLowerCase();
+  message.source = message.source.toLowerCase() || "direct";
 
-  if (name.length < 2) {
-    const error = new Error("Please enter your name.");
-    error.status = 400;
-    throw error;
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    const error = new Error("Please enter a valid email.");
-    error.status = 400;
-    throw error;
-  }
-  if (company.length > 120) {
-    const error = new Error("Company name is too long.");
-    error.status = 400;
-    throw error;
-  }
-  if (service.length > 120) {
-    const error = new Error("Service name is too long.");
-    error.status = 400;
-    throw error;
-  }
-  if (message.length < 10) {
-    const error = new Error("Tell us a little more about the project (at least a sentence).");
-    error.status = 400;
-    throw error;
-  }
-  if (country.length < 2) {
-    const error = new Error("Please tell us which country you are in.");
-    error.status = 400;
-    throw error;
-  }
+  if (message.name.length < 2) fail(400, "Please enter your name.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(message.email)) fail(400, "Please enter a valid email.");
+  if (message.message.length < 10) fail(400, "Tell us a little more about the project (at least a sentence).");
+  if (message.country.length < 2) fail(400, "Please tell us which country you are in.");
 
-  return {
-    name,
-    email,
-    company,
-    service,
-    message,
-    country,
-    city,
-    phone,
-    source,
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    utm_term,
-    utm_content,
-    gclid,
-    landing_page,
-    referrer,
-  };
+  return message;
 }
 
 function clientIp(req) {

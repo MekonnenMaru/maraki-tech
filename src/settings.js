@@ -160,10 +160,10 @@ const DEFAULT_SETTINGS = {
   show_stats: "1",
   show_solutions: "1",
   show_products: "1",
-  show_apps: "1",
+  show_apps: "0", // gambling content is restricted on Google Ads — turn on only if you are not advertising it
   show_process: "1",
-  show_team: "1",
-  show_testimonials: "1",
+  show_team: "0", // sample team — turn on after adding your real team
+  show_testimonials: "0", // sample quotes — turn on after adding real client quotes
   show_pricing: "0",
   show_tech: "1",
   show_faq: "1",

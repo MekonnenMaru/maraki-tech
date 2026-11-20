@@ -1,4 +1,4 @@
-const base = "http://localhost:3000";
+const base = process.env.BASE_URL || "http://localhost:3000";
 
 async function main() {
   const health = await fetch(`${base}/api/health`);
@@ -29,6 +29,7 @@ async function main() {
       name: "Test Visitor",
       email: "visitor@example.com",
       company: "Example Co",
+      country: "Ethiopia",
       service: "Software Development",
       message: "We need a payment dashboard for our stores.",
     }),

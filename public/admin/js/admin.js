@@ -1,3 +1,17 @@
+// Maraki Tech — admin dashboard.
+//
+// Where to find things in this file (search for the function name):
+//   Page list and labels ........ TITLES, PAGES (which lists exist and their fields)
+//   Talking to the server ....... api(), uploadFile()
+//   Login / layout / navigation . showLogin(), showApp(), go(), renderPage()
+//   Date range picker ........... rangeBounds(), rangeControls(), bindRange()
+//   Overview (charts) ........... renderDashboard()
+//   Site settings ............... renderSettings(), settingsControl(), saveSettings()
+//   Editable lists .............. renderCollection(), openEditor(), readEditor(), moveItem()
+//   Inbox (contact leads) ....... renderMessages(), loadMessages(), paintMessageModal()
+//   Account / password .......... renderAccount()
+//   Click and form handlers ..... the addEventListener blocks near the end
+//   Start ....................... boot()
 (function () {
   "use strict";
 
