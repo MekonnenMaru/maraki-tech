@@ -7,7 +7,7 @@ async function main() {
   const contentRes = await fetch(`${base}/api/content`);
   const content = await contentRes.json();
   console.log("content", contentRes.status, {
-    brand: content.settings.brand_name,
+    company: content.settings.company_name,
     services: content.services.map((item) => item.title),
     products: content.products.map((item) => item.title),
     pricingShown: content.settings.show_pricing,

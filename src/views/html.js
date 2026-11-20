@@ -24,4 +24,14 @@ function siteUrl(req) {
   return `${protocol}://${host}`;
 }
 
-module.exports = { esc, telHref, siteUrl };
+// The company name from Site settings (one setting, used everywhere).
+function companyName(s) {
+  return String(s.company_name || "").trim() || "Maraki Tech";
+}
+
+// The logo shows the first word of the company name in capitals: "Maraki Tech" → "MARAKI".
+function logoText(s) {
+  return companyName(s).split(/\s+/)[0].toUpperCase();
+}
+
+module.exports = { esc, telHref, siteUrl, companyName, logoText };

@@ -19,6 +19,7 @@ async function init() {
   await pool.query("SELECT 1"); // fails fast if MySQL is unreachable
   await schema.createTables();
   await schema.addMissingColumns();
+  await schema.renameOldSettings();
   await seed(connection);
   await schema.addMissingApps();
   await schema.createFirstAdmin();

@@ -27,7 +27,7 @@ The settings are in tabs:
 | Tab | Contains |
 | --- | --- |
 | **Visibility** | Switch whole sections on or off. A hidden section also leaves the menu and footer. |
-| **Brand and SEO** | Logo text, page title and description shown on Google |
+| **Brand and SEO** | Company name (used everywhere; the logo shows its first word), plus the optional page title and description for Google |
 | **Hero** | The first screen: headline, text, buttons, image |
 | **Navigation** | Menu labels |
 | **Section headings** | The small label, title and text above each section |
@@ -50,7 +50,7 @@ Google IDs are checked when you save. A wrong format shows an error and nothing 
 
 Menu → **Privacy policy**. This is the full text of your public page `https://your-domain/privacy`.
 
-Your company name (footer brand name), email, phone and location come from **Site settings**,
+Your company name, email, phone and location come from **Site settings**,
 so you only type them once.
 
 **Sections** (list below): every part of the policy, in page order.

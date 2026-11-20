@@ -12,8 +12,8 @@
 //   - item              → bullet list
 //   **bold**            → bold
 //   [text](https://…)   → link (https://, mailto: or /page)
-//   {company} {email} {domain}  → filled in from Site settings (footer brand name, contact email)
-const { esc, telHref } = require("./html");
+//   {company} {email} {domain}  → filled in from Site settings (company name, contact email)
+const { esc, telHref, companyName, logoText } = require("./html");
 
 const TEXT_UPDATED = "2026-11-20"; // last change to the default wording in this file (YYYY-MM-DD)
 
@@ -36,7 +36,7 @@ function servicesInUse(s) {
 
 // Values that {placeholders} in the text are replaced with.
 function placeholders(s, base) {
-  const company = s.footer_brand || "Maraki Tech";
+  const company = companyName(s);
   return {
     company,
     email: String(s.email || "").trim(),
@@ -375,7 +375,7 @@ function sectionPreview(section, s, base) {
 function privacyPage(s, { base, sessionHours, overrides = {} }) {
   const values = placeholders(s, base);
   const company = esc(values.company);
-  const brand = esc(s.brand_name || "MARAKI");
+  const brand = esc(logoText(s));
   const sections = privacySections(s, { base, sessionHours }, overrides).filter((section) => !section.hidden);
   const summary = sections.find((section) => section.id === "summary");
   const numbered = sections.filter((section) => section.id !== "summary");
@@ -402,7 +402,6 @@ function privacyPage(s, { base, sessionHours, overrides = {} }) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/style.css" />
-  <link rel="stylesheet" href="/css/enhancements.css" />
 </head>
 <body class="legal-page">
   <a class="skip" href="#content">Skip to content</a>

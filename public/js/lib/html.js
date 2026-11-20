@@ -68,6 +68,16 @@ export function sectionHeading(label, title, highlight, text) {
   `;
 }
 
+// The company name from Site settings ("Maraki Tech").
+export function companyName(s) {
+  return String(s.company_name || "").trim() || "Maraki Tech";
+}
+
+// The logo shows the first word of the company name in capitals: "Maraki Tech" → "MARAKI".
+export function logoText(s) {
+  return companyName(s).split(/\s+/)[0].toUpperCase();
+}
+
 export function logoMark() {
   return '<span class="logo-mark" aria-hidden="true"><span class="ring"></span><span class="dot"></span></span>';
 }

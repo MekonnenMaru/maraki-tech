@@ -44,8 +44,7 @@ src/
 public/
   index.html              Page shell; the content is filled in by js/main.js
   (privacy policy)        Built by the server: src/views/privacy.js
-  css/style.css           Main styles
-  css/enhancements.css    Newer styles that build on style.css
+  css/style.css           All styles for the public pages (newer additions at the end)
   js/
     main.js               Loads the content and builds the page
     lib/html.js           Safe HTML helpers (esc, safeHref, sectionHeading...)

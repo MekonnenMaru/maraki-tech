@@ -4,12 +4,22 @@ const path = require("path");
 const express = require("express");
 const db = require("../db");
 const config = require("../config");
-const { esc: escAttr, siteUrl } = require("../views/html");
+const { esc: escAttr, siteUrl, companyName } = require("../views/html");
 const { privacyPage } = require("../views/privacy");
 
 const router = express.Router();
 const publicDir = path.join(__dirname, "..", "..", "public");
 const homeTemplate = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
+
+// Browser tab / Google title and description. Both are optional in Site settings:
+// empty title → company name, empty description → the hero supporting text.
+function pageTitle(s) {
+  return String(s.meta_title || "").trim() || companyName(s);
+}
+
+function pageDescription(s) {
+  return String(s.meta_description || "").trim() || String(s.hero_text || "").trim();
+}
 
 // The hero image is used as the link preview picture when it is a JPG/PNG/WebP.
 function previewImage(s, base) {
@@ -27,9 +37,9 @@ function organizationJson(s, base) {
   const data = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: s.footer_brand || "Maraki Tech",
+    name: companyName(s),
     url: `${base}/`,
-    description: s.meta_description || undefined,
+    description: pageDescription(s) || undefined,
     email: s.email || undefined,
     telephone: s.phone || undefined,
     address: s.location ? { "@type": "PostalAddress", addressLocality: s.location } : undefined,
@@ -66,14 +76,14 @@ router.get(["/", "/index.html"], async (req, res, next) => {
   try {
     const s = await db.getSettings();
     const base = siteUrl(req);
-    const title = s.meta_title || "Maraki Tech";
-    const description = s.meta_description || "";
+    const title = pageTitle(s);
+    const description = pageDescription(s);
     const image = previewImage(s, base);
 
     const extraTags = [
       `<link rel="canonical" href="${escAttr(`${base}/`)}" />`,
       `<meta property="og:url" content="${escAttr(`${base}/`)}" />`,
-      `<meta property="og:site_name" content="${escAttr(s.footer_brand || "Maraki Tech")}" />`,
+      `<meta property="og:site_name" content="${escAttr(companyName(s))}" />`,
       image && `<meta property="og:image" content="${escAttr(image)}" />`,
       `<meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}" />`,
       `<script type="application/ld+json">${organizationJson(s, base)}</script>`,

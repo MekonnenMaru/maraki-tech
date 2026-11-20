@@ -49,11 +49,17 @@ const GROUPS = [
   {
     id: "seo",
     title: "Brand and SEO",
-    intro: "The name in the logo, the browser tab, and the search snippet.",
+    intro: "Your company name, and how the site appears in the browser tab and on Google.",
     fields: [
-      field("brand_name", "Logo text"),
-      field("meta_title", "Page title"),
-      field("meta_description", "Page description", "textarea"),
+      field("company_name", "Company name", "text", {
+        hint: "Used everywhere: the logo shows the first word in capitals, plus the footer, Google and the privacy policy.",
+      }),
+      field("meta_title", "Page title (browser tab and Google)", "text", {
+        hint: "Empty = the company name.",
+      }),
+      field("meta_description", "Page description (Google)", "textarea", {
+        hint: "About 150 characters. Empty = the hero supporting text.",
+      }),
     ],
   },
   {
@@ -103,7 +109,6 @@ const GROUPS = [
       field("email", "Email"),
       field("phone", "Phone"),
       field("location", "Location"),
-      field("form_note", "Form note"),
     ],
   },
   {
@@ -125,8 +130,6 @@ const GROUPS = [
     title: "Footer and social",
     intro: "Leave a social link empty to hide that icon.",
     fields: [
-      field("footer_brand", "Brand name"),
-      field("footer_tagline", "Tagline"),
       field("footer_blurb", "Short description", "textarea"),
       field("social_x", "X / Twitter URL", "text", { placeholder: "https://" }),
       field("social_linkedin", "LinkedIn URL", "text", { placeholder: "https://" }),
@@ -174,7 +177,7 @@ const DEFAULT_SETTINGS = {
   show_contact: "1",
   show_cta: "1",
 
-  brand_name: "MARAKI",
+  company_name: "Maraki Tech",
   meta_title: "Maraki Tech — Technology That Moves Business Forward",
   meta_description:
     "Maraki Tech builds modern software, payment solutions, business platforms and digital products.",
@@ -258,7 +261,6 @@ const DEFAULT_SETTINGS = {
   email: "hello@maraki.tech",
   phone: "+251 900 000 000",
   location: "Addis Ababa, Ethiopia",
-  form_note: "We'll respond within 24 hours.",
 
   cta_title: "Ready to build something {highlight}",
   cta_highlight: "great?",
@@ -266,8 +268,6 @@ const DEFAULT_SETTINGS = {
   cta_button: "Start a Conversation →",
   cta_button_href: "#contact",
 
-  footer_brand: "Maraki Tech",
-  footer_tagline: "Technology that moves business forward.",
   footer_blurb:
     "Technology that moves business forward. We build modern software, payment solutions, and digital products from Ethiopia.",
   social_x: "",

@@ -78,7 +78,6 @@ export function contactHtml(s, services) {
 
           <button type="submit" class="form-submit">Send Message →</button>
           <p class="form-status" id="formStatus" role="status"></p>
-          ${s.form_note ? `<p class="form-note">${esc(s.form_note)}</p>` : ""}
           <p class="form-privacy">By sending, you agree to our <a href="/privacy">Privacy Policy</a>.</p>
         </form>
       </div>
@@ -134,7 +133,7 @@ export async function sendContactForm(form) {
     form.reset();
     trackLead();
     setButton("Message Sent ✓", { disabled: true });
-    showStatus("ok", "Thanks. We'll get back to you within 24 hours.");
+    showStatus("ok", "Thanks! Your message has been sent."); // the reply time is promised once, in the contact text
     setTimeout(done, 2200);
   } catch (error) {
     done();

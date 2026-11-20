@@ -166,6 +166,21 @@ async function addMissingColumns() {
   }
 }
 
+// Settings that were merged or renamed. The old value is copied to the new name once
+// (only if the new one isn't saved yet). [old key, new key]
+const RENAMED_SETTINGS = [
+  ["footer_brand", "company_name"], // "Brand name" + "Logo text" became one "Company name"
+];
+
+async function renameOldSettings() {
+  for (const [oldKey, newKey] of RENAMED_SETTINGS) {
+    await execute(
+      "INSERT IGNORE INTO settings (`key`, value) SELECT ?, value FROM settings WHERE `key` = ?",
+      [newKey, oldKey]
+    );
+  }
+}
+
 async function addMissingApps() {
   for (const app of APP_CATALOG) {
     const [name, , , , , edition] = app;
@@ -188,4 +203,4 @@ async function createFirstAdmin() {
   );
 }
 
-module.exports = { createTables, addMissingColumns, addMissingApps, createFirstAdmin };
+module.exports = { createTables, addMissingColumns, renameOldSettings, addMissingApps, createFirstAdmin };

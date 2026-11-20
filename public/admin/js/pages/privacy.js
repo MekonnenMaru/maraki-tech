@@ -21,7 +21,7 @@ const FORMAT_HELP = `
       <li>Start a line with <code>- </code> for a bullet point.</li>
       <li><code>**words**</code> makes words <strong>bold</strong>.</li>
       <li><code>[text](https://example.com)</code> makes a link.</li>
-      <li>These are filled in from Site settings: <code>{company}</code> (footer brand name), <code>{email}</code> (contact email), <code>{domain}</code> (website address).</li>
+      <li>These are filled in from Site settings: <code>{company}</code> (company name), <code>{email}</code> (contact email), <code>{domain}</code> (website address).</li>
     </ul>
   </details>
 `;

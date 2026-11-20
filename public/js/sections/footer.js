@@ -1,5 +1,5 @@
 // The closing call-to-action banner and the page footer.
-import { esc, safeHref, externalAttrs, richTitle, logoMark } from "../lib/html.js";
+import { esc, safeHref, externalAttrs, richTitle, logoMark, logoText, companyName } from "../lib/html.js";
 
 export function ctaHtml(s) {
   const href = safeHref(s.cta_button_href, "#contact");
@@ -53,7 +53,7 @@ export function footerHtml(s, show) {
   return `
     <div class="footer-grid">
       <div class="footer-col">
-        <div class="footer-logo">${logoMark()}${esc(s.brand_name || "MARAKI")}</div>
+        <div class="footer-logo">${logoMark()}${esc(logoText(s))}</div>
         ${s.footer_blurb ? `<p>${esc(s.footer_blurb)}</p>` : ""}
         ${socialLinks(s)}
       </div>
@@ -77,8 +77,8 @@ export function footerHtml(s, show) {
     </div>
     <div class="footer-bottom">
       <div class="footer-bottom-inner">
-        <div>© ${new Date().getFullYear()} <span class="footer-brand">${esc(s.footer_brand || "Maraki Tech")}</span>. All rights reserved.</div>
-        <div>${esc(s.footer_tagline || "")} · <a href="/privacy">Privacy</a> · <a href="/admin">Admin</a></div>
+        <div>© ${new Date().getFullYear()} <span class="footer-brand">${esc(companyName(s))}</span>. All rights reserved.</div>
+        <div><a href="/privacy">Privacy</a> · <a href="/admin">Admin</a></div>
       </div>
     </div>
   `;
