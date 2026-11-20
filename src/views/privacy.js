@@ -12,7 +12,7 @@
 //   - item              → bullet list
 //   **bold**            → bold
 //   [text](https://…)   → link (https://, mailto: or /page)
-//   {company} {legal_name} {email} {domain} {min_age} {retention}  → filled in from settings
+//   {company} {email} {domain}  → filled in from Site settings (footer brand name, contact email)
 const { esc, telHref } = require("./html");
 
 const TEXT_UPDATED = "2026-11-20"; // last change to the default wording in this file (YYYY-MM-DD)
@@ -20,9 +20,9 @@ const TEXT_UPDATED = "2026-11-20"; // last change to the default wording in this
 /* ---------- Helpers ---------- */
 
 // The later of: this file's wording date, or the last privacy change made in the dashboard.
-function lastUpdated(s) {
-  const fromSettings = /^\d{4}-\d{2}-\d{2}$/.test(s.privacy_updated || "") ? s.privacy_updated : "";
-  const latest = fromSettings > TEXT_UPDATED ? fromSettings : TEXT_UPDATED;
+function lastUpdated(updated) {
+  const fromDashboard = /^\d{4}-\d{2}-\d{2}$/.test(updated || "") ? updated : "";
+  const latest = fromDashboard > TEXT_UPDATED ? fromDashboard : TEXT_UPDATED;
   return new Date(`${latest}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 }
 
@@ -36,13 +36,15 @@ function servicesInUse(s) {
 
 // Values that {placeholders} in the text are replaced with.
 function placeholders(s, base) {
+  const company = s.footer_brand || "Maraki Tech";
   return {
-    company: s.footer_brand || "Maraki Tech",
-    legal_name: String(s.privacy_legal_name || "").trim() || s.footer_brand || "Maraki Tech",
-    email: String(s.privacy_email || s.email || "").trim(),
+    company,
+    email: String(s.email || "").trim(),
     domain: base.replace(/^https?:\/\//, ""),
-    min_age: /^\d{1,2}$/.test(s.privacy_min_age || "") ? s.privacy_min_age : "16",
-    retention: String(s.privacy_retention || "").trim().replace(/\.$/, "") || "until we no longer need them for your enquiry",
+    // Older names, still filled in so text saved before keeps working.
+    legal_name: company,
+    min_age: "16",
+    retention: "until we have finished handling your enquiry and delete them, or until you ask us to delete them",
   };
 }
 
@@ -77,7 +79,7 @@ function renderText(text, values) {
 /* ---------- Always-automatic parts ---------- */
 
 function contactHtml(s) {
-  const email = String(s.privacy_email || s.email || "").trim();
+  const email = String(s.email || "").trim();
   const phone = String(s.phone || "").trim();
   const location = String(s.location || "").trim();
   const tel = telHref(phone);
@@ -122,7 +124,7 @@ function storageTable(on, sessionHours) {
 // Every section that can ever appear, in page order. Used to check ids from the dashboard.
 const SECTION_IDS = [
   "summary", "who", "collect", "use", "cookies", "analytics", "adsense", "spam",
-  "retention", "sharing", "transfers", "security", "rights", "children", "changes", "extra", "contact",
+  "retention", "sharing", "transfers", "security", "rights", "children", "changes", "contact",
 ];
 
 // Returns the sections for the current settings, with their DEFAULT text.
@@ -130,13 +132,8 @@ const SECTION_IDS = [
 function defaultSections(s, { base, sessionHours }) {
   const on = servicesInUse(s);
   const cookies = on.analytics || on.ads;
-  const newsletter = s.privacy_newsletter === "1";
   const google = [on.analytics && "Google Analytics", on.ads && "Google Ads", on.adsense && "Google AdSense"].filter(Boolean);
   const https = base.startsWith("https://");
-  const withdraw = [
-    cookies && "for cookies: clear this site’s data and choose Essential only",
-    newsletter && "for news: use the unsubscribe link",
-  ].filter(Boolean);
 
   const sections = [
     {
@@ -144,7 +141,7 @@ function defaultSections(s, { base, sessionHours }) {
       title: "In short",
       text: [
         "- We only collect what you type into the contact form, plus basic technical details to stop spam.",
-        `- We use it to reply to you${newsletter ? " and, if you agree, to send occasional news" : ""}. We never sell it.`,
+        "- We use it to reply to you. We never sell it.",
         `- ${cookies ? "Analytics and advertising cookies load only if you click **Accept**." : "We don’t use analytics or advertising cookies."}${on.adsense ? " Google may show ads on this site." : ""}`,
         "- You can ask us to see, correct or delete your information at any time.",
       ].join("\n"),
@@ -152,7 +149,7 @@ function defaultSections(s, { base, sessionHours }) {
     {
       id: "who",
       title: "Who we are",
-      text: "{legal_name} (“we”, “us”) runs this website and is responsible for the personal information described here (the “data controller”).",
+      text: "{company} (“we”, “us”) runs this website and is responsible for the personal information described here (the “data controller”).",
       auto: contactHtml(s),
     },
     {
@@ -175,12 +172,9 @@ function defaultSections(s, { base, sessionHours }) {
         "- **Record which page, ad or link brought you to us:** our legitimate interest in knowing which marketing works. Saved only together with a message you send.",
         "- **Keep your IP address and browser type with your message, and limit repeated sending:** our legitimate interest in protecting the website from spam and abuse.",
         cookies && "- **Analytics and ad measurement cookies:** your consent (the Accept button). You can withdraw it at any time.",
-        newsletter && "- **Send occasional news about our services:** your consent or our existing contact with you. Every message has an unsubscribe option.",
         "- **Keep records when the law requires it:** our legal obligations.",
         "",
-        newsletter
-          ? "We may send you occasional news about our services. Every message includes a way to unsubscribe, and you can ask us to stop at any time."
-          : "We use your contact details only to reply to you about your enquiry. We do not add you to a mailing list.",
+        "We use your contact details only to reply to you about your enquiry. We do not add you to a mailing list.",
         "",
         "We do not make decisions about you by automated means alone, and we do not build profiles of individual visitors.",
       ].filter((line) => line !== false).join("\n"),
@@ -235,7 +229,7 @@ function defaultSections(s, { base, sessionHours }) {
       id: "retention",
       title: "How long we keep information",
       text: [
-        "- **Contact messages:** {retention}.",
+        "- **Contact messages:** until we have finished handling your enquiry and delete them, or until you ask us to delete them.",
         "- **Visit counts:** kept as dates and times only, with no personal data.",
         "- **Browser storage:** see the table under “Cookies and browser storage”.",
       ].join("\n"),
@@ -271,7 +265,7 @@ function defaultSections(s, { base, sessionHours }) {
         "- **Correct** information that is wrong or incomplete.",
         "- **Delete** your message and contact details.",
         "- **Stop or limit** how we use your information, or object to it.",
-        withdraw.length && `- **Withdraw your consent** at any time (${withdraw.join("; ")}).`,
+        cookies && "- **Withdraw your consent** for cookies at any time: clear this site’s data and choose Essential only.",
         "",
         "To use these rights, contact us using the details under “Contact us about privacy”. We may ask you to confirm who you are, and we will reply within 30 days. You can also complain to the data protection authority in your country. In Ethiopia, this is the authority responsible under the Personal Data Protection Proclamation No. 1321/2024.",
       ].filter((line) => line !== 0 && line !== false).join("\n"),
@@ -279,14 +273,13 @@ function defaultSections(s, { base, sessionHours }) {
     {
       id: "children",
       title: "Children",
-      text: "This website is meant for businesses and adults. We do not knowingly collect information from children under {min_age}. If you believe a child has sent us information, contact us and we will delete it.",
+      text: "This website is meant for businesses and adults. We do not knowingly collect information from children under 16. If you believe a child has sent us information, contact us and we will delete it.",
     },
     {
       id: "changes",
       title: "Changes to this policy",
       text: "If we change how we handle information, we will update this page and the date at the top.",
     },
-    String(s.privacy_extra || "").trim() ? { id: "extra", title: "Additional information", text: s.privacy_extra } : null,
     {
       id: "contact",
       title: "Contact us about privacy",
@@ -305,6 +298,7 @@ function defaultSections(s, { base, sessionHours }) {
 //   sections: { who: { title, text, hidden }, ... },   // changes to built-in sections
 //   custom:   [ { id: "custom-1a2b3c", title, text, hidden }, ... ],  // sections you added
 //   order:    [ "summary", "who", "custom-1a2b3c", ... ]              // your order (optional)
+//   updated:  "2026-11-20"                                           // "Last updated" date
 // }
 
 // Accepts the saved value (also the older format { who: { title, text } }) and cleans it up.
@@ -315,6 +309,7 @@ function normalizeStore(raw) {
     sections: (isNewFormat ? value.sections : value) || {},
     custom: Array.isArray(value.custom) ? value.custom.filter((item) => item && /^custom-[a-z0-9]{4,20}$/.test(item.id)) : [],
     order: Array.isArray(value.order) ? value.order.filter((id) => typeof id === "string") : [],
+    updated: /^\d{4}-\d{2}-\d{2}$/.test(value.updated || "") ? value.updated : "",
   };
 }
 
@@ -433,7 +428,7 @@ function privacyPage(s, { base, sessionHours, overrides = {} }) {
   <main id="content" class="legal-wrap">
     <p class="section-label">Legal</p>
     <h1 class="section-title">Privacy Policy</h1>
-    <p class="section-description">Last updated: ${lastUpdated(s)}. This page explains what ${company} collects when you visit ${esc(values.domain)} or contact us, why, and what you can do about it.</p>
+    <p class="section-description">Last updated: ${lastUpdated(normalizeStore(overrides).updated)}. This page explains what ${company} collects when you visit ${esc(values.domain)} or contact us, why, and what you can do about it.</p>
 
     ${summary && summary.text.trim() ? `
     <aside class="legal-summary">

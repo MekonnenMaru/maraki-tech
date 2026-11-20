@@ -223,9 +223,6 @@ const FORMATS = {
   google_ads_id: [/^AW-\d{6,15}$/, "The Google Ads ID looks like AW-123456789."],
   google_ads_conversion_label: [/^[\w-]{6,40}$/, "The conversion label is the short code after the slash, e.g. AbC-D_efG12."],
   adsense_client_id: [/^ca-pub-\d{10,20}$/, "The AdSense publisher ID looks like ca-pub-1234567890123456."],
-  privacy_email: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "The privacy contact email doesn't look like an email address."],
-  privacy_min_age: [/^\d{1,2}$/, "The minimum age must be a number, e.g. 16."],
-  privacy_updated: [/^\d{4}-\d{2}-\d{2}$/, "Write the “Last updated” date as YYYY-MM-DD, e.g. 2026-11-20."],
 };
 
 function checkFormat(key, value) {
@@ -233,18 +230,19 @@ function checkFormat(key, value) {
   if (rule && value && !rule[0].test(value)) fail(400, rule[1]);
 }
 
-// Most settings are short. Text a lawyer provides can be long.
-const MAX_LENGTH = { privacy_extra: 20000 };
-
-// Changing any of these changes what the Privacy Policy says,
+// Switching a Google service on/off changes what the Privacy Policy says,
 // so its "Last updated" date moves to today automatically.
-const PRIVACY_KEYS = [
-  "privacy_newsletter", "privacy_legal_name", "privacy_email", "privacy_retention", "privacy_min_age", "privacy_extra",
-  "ga4_measurement_id", "google_ads_id", "adsense_client_id",
-];
+const POLICY_KEYS = ["ga4_measurement_id", "google_ads_id", "adsense_client_id"];
 
 function today() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" }); // YYYY-MM-DD
+}
+
+// Sets the Privacy Policy's "Last updated" date to today.
+async function touchPrivacyDate() {
+  const store = normalizeStore(await db.getPrivacyOverrides());
+  store.updated = today();
+  await db.savePrivacyOverrides(store);
 }
 
 router.put("/settings", async (req, res, next) => {
@@ -258,23 +256,20 @@ router.put("/settings", async (req, res, next) => {
       let value = input[key];
       if (typeof value === "boolean") value = value ? "1" : "0";
       value = value == null ? "" : String(value).trim();
-      if (key.startsWith("show_") || key === "privacy_newsletter") value = value === "1" || value === "true" ? "1" : "0";
-      if (value.length > (MAX_LENGTH[key] || 2000)) fail(400, `${key.replace(/_/g, " ")} is too long.`);
+      if (key.startsWith("show_")) value = value === "1" || value === "true" ? "1" : "0";
+      if (value.length > 2000) fail(400, `${key.replace(/_/g, " ")} is too long.`);
       if (key === "ga4_measurement_id" || key === "google_ads_id") value = value.toUpperCase();
-      if (key === "adsense_client_id" || key === "privacy_email") value = value.toLowerCase();
+      if (key === "adsense_client_id") value = value.toLowerCase();
       checkFormat(key, value);
       values[key] = value;
     }
 
     if (!Object.keys(values).length) fail(400, "Nothing to update.");
 
-    // Policy text changed and the date wasn't edited by hand → today's date.
     const current = await db.getSettings();
-    const policyChanged = PRIVACY_KEYS.some((key) => key in values && values[key] !== current[key]);
-    const dateEdited = "privacy_updated" in values && values.privacy_updated !== current.privacy_updated;
-    if (policyChanged && !dateEdited) values.privacy_updated = today();
-
-    res.json(await db.saveSettings(values));
+    const saved = await db.saveSettings(values);
+    if (POLICY_KEYS.some((key) => key in values && values[key] !== current[key])) await touchPrivacyDate();
+    res.json(saved);
   } catch (error) {
     next(error);
   }
@@ -305,7 +300,7 @@ async function privacyState(req) {
       .replace(/\s+/g, " ")
       .trim(),
   }));
-  return { sections, updated: settings.privacy_updated };
+  return { sections, updated: normalizeStore(store).updated };
 }
 
 router.get("/privacy", async (req, res, next) => {
@@ -323,8 +318,8 @@ function privacyChange(change) {
     try {
       const store = normalizeStore(await db.getPrivacyOverrides());
       await change(store, req);
+      store.updated = today();
       await db.savePrivacyOverrides(store);
-      await db.saveSettings({ privacy_updated: today() });
       res.json(await privacyState(req));
     } catch (error) {
       next(error);

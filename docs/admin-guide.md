@@ -50,8 +50,8 @@ Google IDs are checked when you save. A wrong format shows an error and nothing 
 
 Menu → **Privacy policy**. This is the full text of your public page `https://your-domain/privacy`.
 
-**Company details** (top card): newsletter switch, legal company name, minimum age, privacy email
-and how long you keep messages. Click **Save details**.
+Your company name (footer brand name), email, phone and location come from **Site settings**,
+so you only type them once.
 
 **Sections** (list below): every part of the policy, in page order.
 
@@ -85,10 +85,10 @@ your email/phone/location (from Site settings → Contact details) and the cooki
 | `- something` at the start of a line | a bullet point |
 | `**words**` | **bold** words |
 | `[text](https://example.com)` | a link |
-| `{company}` `{legal_name}` `{email}` `{domain}` `{min_age}` `{retention}` | your current settings |
+| `{company}` `{email}` `{domain}` | your company name, contact email and website address from Site settings |
 
-The **Last updated** date at the top of the page changes to today on its own whenever you save
-a section, the company details, or a Google ID.
+The **Last updated** date at the top of the page changes to today on its own whenever you change
+a section or a Google ID.
 
 **Recommended:** ask a lawyer to read `/privacy` once (Ethiopia: Personal Data Protection
 Proclamation No. 1321/2024; EU/UK clients: GDPR). Make their changes directly in the sections.

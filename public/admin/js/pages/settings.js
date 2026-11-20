@@ -10,10 +10,6 @@ import { view } from "../core/shell.js";
 let schema = null; // cached: it only changes when the server code changes
 const TAB_KEY = "maraki-settings-tab";
 
-// Groups that have their own page in the menu instead of a tab here.
-const OWN_PAGE = ["privacy"];
-const tabGroups = () => schema.groups.filter((group) => !OWN_PAGE.includes(group.id));
-
 // Long text fields get the full width.
 const WIDE_KEYS = /title|text|description|href|url|blurb|email|highlight|alt|tagline/;
 
@@ -69,7 +65,7 @@ export async function renderSettings() {
   schema = loadedSchema;
 
   const saved = storage.get(TAB_KEY);
-  const groups = tabGroups();
+  const groups = schema.groups;
   const activeId = groups.some((group) => group.id === saved) ? saved : groups[0].id;
 
   view().innerHTML = `
@@ -124,7 +120,7 @@ registerActions({
 registerForms({
   "save-settings": async (form) => {
     const values = {};
-    for (const group of tabGroups()) {
+    for (const group of schema.groups) {
       for (const field of group.fields) {
         const input = form.elements[field.key];
         values[field.key] = field.type === "toggle" ? (input.checked ? "1" : "0") : input.value.trim();

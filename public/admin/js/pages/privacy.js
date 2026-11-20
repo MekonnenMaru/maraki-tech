@@ -1,4 +1,5 @@
-// Privacy policy: company details + every section of the public /privacy page.
+// Privacy policy: every section of the public /privacy page.
+// Company name, email, phone and location come from Site settings.
 //   Built-in sections: edit, hide/show, move, reset to the automatic text.
 //   Your own sections: add, edit, hide/show, move, delete.
 // The default text lives on the server in src/views/privacy.js.
@@ -7,12 +8,10 @@ import { esc, clip, toast } from "../core/util.js";
 import { icon } from "../core/icons.js";
 import { registerActions, registerForms } from "../core/actions.js";
 import { openModal, closeModal, confirmDialog, modalElement } from "../core/modal.js";
-import { fieldHtml } from "../core/fields.js";
 import { view } from "../core/shell.js";
 
 const API = "/api/admin/privacy";
 let sections = [];
-let detailFields = [];
 
 const FORMAT_HELP = `
   <details class="help">
@@ -22,8 +21,7 @@ const FORMAT_HELP = `
       <li>Start a line with <code>- </code> for a bullet point.</li>
       <li><code>**words**</code> makes words <strong>bold</strong>.</li>
       <li><code>[text](https://example.com)</code> makes a link.</li>
-      <li>These are filled in from your settings:
-        <code>{company}</code> <code>{legal_name}</code> <code>{email}</code> <code>{domain}</code> <code>{min_age}</code> <code>{retention}</code></li>
+      <li>These are filled in from Site settings: <code>{company}</code> (footer brand name), <code>{email}</code> (contact email), <code>{domain}</code> (website address).</li>
     </ul>
   </details>
 `;
@@ -77,7 +75,7 @@ function sectionRow(section, index, label) {
   `;
 }
 
-function render(state, settings) {
+function render(state) {
   sections = state.sections;
   const shown = sections.filter((section) => !section.hidden);
   const counts = [
@@ -94,23 +92,11 @@ function render(state, settings) {
     <div class="page-head">
       <div>
         <h2>Privacy policy</h2>
-        <p class="muted">This is your public Privacy Policy page. Add, edit, hide or reorder sections.
+        <p class="muted">This is your public Privacy Policy page. Add, edit, hide or reorder sections. Your company name, email, phone and location come from <a href="#content" data-action="go" data-page="content">Site settings</a>.
           ${state.updated ? ` Last updated: <strong>${esc(formatDate(state.updated))}</strong>.` : ""}</p>
       </div>
       <a class="btn ghost" href="/privacy" target="_blank" rel="noopener">${icon("external")}View page</a>
     </div>
-
-    <form class="card" data-form="save-privacy-details">
-      <div class="card-head">
-        <div>
-          <h3>Company details</h3>
-          <p class="muted">Used throughout the policy. Email, phone and location come from Site settings → Contact details.</p>
-        </div>
-      </div>
-      <div class="switch-grid">${detailFields.filter((f) => f.type === "toggle").map((f) => fieldHtml(f, settings[f.key] === "1")).join("")}</div>
-      <div class="form-grid">${detailFields.filter((f) => f.type !== "toggle").map((f) => fieldHtml(f, settings[f.key] ?? "")).join("")}</div>
-      <div class="form-actions"><button class="btn primary" type="submit">${icon("check")}Save details</button></div>
-    </form>
 
     <section class="card flush">
       <div class="card-head padded">
@@ -128,12 +114,7 @@ function render(state, settings) {
 }
 
 export async function renderPrivacy() {
-  const [state, settings, schema] = await Promise.all([api(API), api("/api/admin/settings"), api("/api/admin/schema")]);
-  // "Last updated" is automatic (shown in the header). "Extra section" is replaced by "Add section".
-  detailFields = (schema.groups.find((group) => group.id === "privacy")?.fields || [])
-    .filter((field) => field.key !== "privacy_updated" && field.key !== "privacy_extra")
-    .map((field) => ({ ...field, wide: field.wide || field.key === "privacy_email" }));
-  render(state, settings);
+  render(await api(API));
 }
 
 async function refresh() {
@@ -264,14 +245,4 @@ registerForms({
     await refresh();
   },
 
-  "save-privacy-details": async (form) => {
-    const values = {};
-    for (const field of detailFields) {
-      const input = form.elements[field.key];
-      values[field.key] = field.type === "toggle" ? (input.checked ? "1" : "0") : input.value.trim();
-    }
-    await api("/api/admin/settings", { method: "PUT", body: values });
-    toast("Details saved. The Privacy Policy page is updated.");
-    await refresh();
-  },
 });
