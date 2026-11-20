@@ -231,6 +231,16 @@ input:focus, select:focus, textarea:focus {
 .switch input:focus-visible + .switch-track { outline: 2px solid var(--brand); outline-offset: 2px; }
 .switch-label { font-weight: 550; }
 
+/* Small on/off switch inside a list row (e.g. show/hide a privacy section) */
+.row-switch {
+  display: inline-grid; place-items: center; width: 50px; height: 36px; padding: 0;
+  border: 0; border-radius: var(--radius-sm); background: transparent;
+}
+.row-switch:hover { background: var(--hover); }
+.row-switch[aria-checked="true"] .switch-track { background: var(--brand); }
+.row-switch[aria-checked="true"] .switch-thumb { transform: translateX(16px); }
+.row-switch:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
 /* Image upload */
 .upload { display: flex; gap: 14px; align-items: center; }
 .upload-preview {

@@ -64,7 +64,10 @@ function sectionRow(section, index, label) {
           <button class="icon-btn" type="button" data-action="move-privacy-section" data-index="${index}" data-step="-1" ${first ? "disabled" : ""} title="Move up">${icon("up")}</button>
           <button class="icon-btn" type="button" data-action="move-privacy-section" data-index="${index}" data-step="1" ${last ? "disabled" : ""} title="Move down">${icon("down")}</button>`}
         <button class="icon-btn" type="button" data-action="edit-privacy-section" data-id="${id}" title="Edit">${icon("edit")}</button>
-        <button class="icon-btn" type="button" data-action="toggle-privacy-section" data-id="${id}" title="${section.hidden ? "Show on the page" : "Hide from the page"}">${icon(section.hidden ? "eyeOff" : "eye")}</button>
+        <button class="row-switch" type="button" role="switch" aria-checked="${!section.hidden}" data-action="toggle-privacy-section" data-id="${id}"
+          title="${section.hidden ? "Hidden — click to show on the page" : "Shown — click to hide from the page"}" aria-label="Show “${esc(section.title)}” on the page">
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </button>
         ${section.custom
           ? `<button class="icon-btn danger" type="button" data-action="delete-privacy-section" data-id="${id}" title="Delete">${icon("trash")}</button>`
           : section.edited

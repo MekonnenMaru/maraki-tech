@@ -59,7 +59,7 @@ and how long you keep messages. Click **Save details**.
 | --- | --- |
 | **Add section** | Adds your own section (title + text). It appears before “Contact us about privacy”. |
 | Click a row / ✏️ | **Edit** the title and text, then **Save section** |
-| 👁 | **Hide** the section from the public page (or show it again). Hidden rows show a *Hidden* label and no number. |
+| On/off switch | **On** (green) = shown on the public page. **Off** (grey) = hidden. Hidden rows show a *Hidden* label and no number. |
 | ⌃ ⌄ | **Move** the section up or down. “In short” always stays at the top. |
 | ↺ | **Reset** a built-in section you edited back to the automatic text |
 | 🗑 | **Delete** one of your own sections (asks first; can't be undone) |
