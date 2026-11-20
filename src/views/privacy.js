@@ -130,6 +130,7 @@ const SECTION_IDS = [
 
 // Returns the sections for the current settings, with their DEFAULT text.
 // `auto` = HTML that is always added after the text (not editable).
+// `optional: true` = hidden until switched on in the dashboard (only the necessary sections show by default).
 function defaultSections(s, { base, sessionHours }) {
   const on = servicesInUse(s);
   const cookies = on.analytics || on.ads;
@@ -139,6 +140,7 @@ function defaultSections(s, { base, sessionHours }) {
   const sections = [
     {
       id: "summary",
+      optional: true,
       title: "In short",
       text: [
         "- We only collect what you type into the contact form, plus basic technical details to stop spam.",
@@ -219,6 +221,7 @@ function defaultSections(s, { base, sessionHours }) {
       : null,
     {
       id: "spam",
+      optional: true,
       title: "Spam protection and server logs",
       text: [
         "To stop automated spam, the server briefly remembers how often an IP address sends the contact form (at most 5 messages per hour) or tries to sign in to the admin area. This is kept in memory only, never saved, and forgotten within an hour.",
@@ -248,11 +251,13 @@ function defaultSections(s, { base, sessionHours }) {
     },
     {
       id: "transfers",
+      optional: google.length === 0,
       title: "Information stored outside your country",
       text: `Our hosting provider${google.length ? " and Google" : ""} may store or process information on servers outside your country, including outside Ethiopia. When that happens, we choose providers that protect information with recognised safeguards.`,
     },
     {
       id: "security",
+      optional: true,
       title: "How we protect it",
       text: `Messages are stored in our own database, which only authorised {company} staff can access through a password-protected admin area. ${https ? "The website uses an encrypted (HTTPS) connection, and staff" : "Staff"} passwords are stored only as secure one-way hashes. No system is perfectly secure, so please do not send highly sensitive information through the contact form.`,
     },
@@ -273,11 +278,13 @@ function defaultSections(s, { base, sessionHours }) {
     },
     {
       id: "children",
+      optional: true,
       title: "Children",
       text: "This website is meant for businesses and adults. We do not knowingly collect information from children under 16. If you believe a child has sent us information, contact us and we will delete it.",
     },
     {
       id: "changes",
+      optional: true,
       title: "Changes to this policy",
       text: "If we change how we handle information, we will update this page and the date at the top.",
     },
@@ -344,7 +351,7 @@ function privacySections(s, opts, rawStore = {}) {
       title: String(change.title || "").trim() || section.title,
       text: hasText ? change.text : section.text,
       edited: hasText || !!String(change.title || "").trim(),
-      hidden: !!change.hidden,
+      hidden: typeof change.hidden === "boolean" ? change.hidden : !!section.optional,
       custom: false,
     };
   });

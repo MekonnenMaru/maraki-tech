@@ -102,7 +102,7 @@ function render(state) {
       <div class="card-head padded">
         <div>
           <h3>Sections</h3>
-          <p class="muted">${counts}. Automatic sections update themselves when your settings change.</p>
+          <p class="muted">${counts}. Only the necessary sections are on at first; switch on any extra ones you want.</p>
         </div>
         <button class="btn primary" type="button" data-action="add-privacy-section">${icon("plus")}Add section</button>
       </div>

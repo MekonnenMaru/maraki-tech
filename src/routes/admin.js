@@ -375,12 +375,12 @@ router.patch("/privacy/sections/:id", privacyChange((store, req) => {
   else store.sections[id] = { ...store.sections[id], hidden };
 }));
 
-// Built-in section: back to the automatic title and text (stays hidden if it was hidden).
+// Built-in section: back to the automatic title and text (your on/off choice is kept).
 router.post("/privacy/sections/:id/reset", privacyChange((store, req) => {
   const id = req.params.id;
   if (!SECTION_IDS.includes(id)) fail(400, "Only built-in sections can be reset.");
-  const hidden = !!store.sections[id]?.hidden;
-  if (hidden) store.sections[id] = { hidden: true };
+  const hidden = store.sections[id]?.hidden;
+  if (typeof hidden === "boolean") store.sections[id] = { hidden };
   else delete store.sections[id];
 }));
 

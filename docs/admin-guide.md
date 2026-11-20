@@ -74,6 +74,13 @@ Labels:
 Built-in sections can't be deleted, because the website writes them for you. **Hide** them instead;
 you can always show them again.
 
+**Switched on at first (necessary):** Who we are, What we collect, Why we use it, Cookies, How long we keep
+information, Who we share it with, Your rights, Contact us about privacy — plus the Google sections
+when a Google ID is filled in, and "Information stored outside your country" when Google is used.
+
+**Switched off at first (optional):** In short, Spam protection and server logs, How we protect it,
+Children, Changes to this policy. Switch them on if you want them.
+
 Some parts are always automatic and can't be edited, so they are never wrong:
 your email/phone/location (from Site settings → Contact details) and the cookie table.
 
