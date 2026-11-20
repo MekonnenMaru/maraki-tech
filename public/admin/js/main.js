@@ -14,6 +14,7 @@ import { renderMessages } from "./pages/messages.js";
 import { renderSettings } from "./pages/settings.js";
 import { renderList, isList } from "./pages/list.js";
 import { renderAccount } from "./pages/account.js";
+import { toast } from "./core/util.js";
 
 registerPage("dashboard", renderDashboard);
 registerPage("messages", renderMessages);
@@ -25,8 +26,6 @@ registerListPage(renderList, isList);
 
 registerForms({
   login: async (form) => {
-    const error = document.getElementById("loginError");
-    error.textContent = "";
     try {
       const result = await api("/api/admin/login", {
         method: "POST",
@@ -38,7 +37,8 @@ registerForms({
       form.reset();
       showApp();
     } catch (problem) {
-      error.textContent = problem.message;
+      toast(problem.message, "err");
+      form.password.select();
     }
   },
 });

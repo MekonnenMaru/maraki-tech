@@ -266,7 +266,6 @@ input:focus, select:focus, textarea:focus {
 }
 .login-head { display: grid; gap: 6px; margin-top: 6px; }
 .login-head h1 { font-size: 1.35rem; font-weight: 750; }
-.login-card .form-error:empty { display: none; }
 .login-notice {
   padding-top: 16px; border-top: 1px solid var(--line);
   color: var(--muted); font-size: 0.8rem; line-height: 1.5; text-align: center;
