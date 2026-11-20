@@ -94,6 +94,7 @@ function presentMessage(row) {
     utm_campaign: row.utm_campaign || "",
     utm_term: row.utm_term || "",
     utm_content: row.utm_content || "",
+    gclid: row.gclid || "",
     landing_page: row.landing_page || "",
     referrer: row.referrer || "",
     ip: row.ip || "",

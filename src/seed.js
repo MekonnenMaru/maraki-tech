@@ -12,7 +12,7 @@ async function seed(db) {
     const stats = [
       [50, "+", "Projects Delivered"],
       [30, "+", "Happy Clients"],
-      [99, "%", "% Uptime"],
+      [99, "%", "Uptime"],
       [5, "+", "Years Experience"],
     ];
     for (const [index, row] of stats.entries()) {

@@ -267,7 +267,7 @@
           ${stats.map((stat) => `
             <div class="stat">
               <div class="stat-number" data-count="${esc(stat.value)}" data-suffix="${esc(stat.suffix)}">0</div>
-              <div class="stat-label">${esc(stat.label)}</div>
+              <div class="stat-label">${esc(String(stat.label || "").replace(/^s*%s*/, ""))}</div>
             </div>
           `).join("")}
         </div>
@@ -946,6 +946,7 @@
       utm_campaign: attr.utm_campaign || "",
       utm_term: attr.utm_term || "",
       utm_content: attr.utm_content || "",
+      gclid: attr.gclid || attr.gbraid || attr.wbraid || "",
       landing_page: attr.landing_page || `${window.location.pathname}${window.location.search}`,
       referrer: attr.referrer || "",
     };
@@ -962,6 +963,19 @@
     window.gtag = window.gtag || function gtag() {
       window.dataLayer.push(arguments);
     };
+    // Consent Mode v2: tags only load after "Accept", so we grant explicitly.
+    window.gtag("consent", "default", {
+      ad_storage: "denied",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
+      analytics_storage: "denied",
+    });
+    window.gtag("consent", "update", {
+      ad_storage: "granted",
+      ad_user_data: "granted",
+      ad_personalization: "granted",
+      analytics_storage: "granted",
+    });
     window.gtag("js", new Date());
     if (trackingSettings.ga4) {
       window.gtag("config", trackingSettings.ga4, { anonymize_ip: true });
@@ -990,6 +1004,20 @@
         send_to: `${trackingSettings.adsId}/${trackingSettings.adsLabel}`,
       });
     }
+  }
+
+  let contactClicksBound = false;
+
+  function bindContactClicks() {
+    if (contactClicksBound) return;
+    contactClicksBound = true;
+    document.addEventListener("click", (event) => {
+      const link = event.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="t.me/"]');
+      if (!link || typeof window.gtag !== "function") return;
+      const href = link.getAttribute("href") || "";
+      const method = href.startsWith("tel:") ? "phone" : href.startsWith("mailto:") ? "email" : "telegram";
+      window.gtag("event", "contact_click", { method });
+    });
   }
 
   function removeConsentBanner() {
@@ -1029,6 +1057,7 @@
       adsLabel: String(s.google_ads_conversion_label || "").trim(),
     };
     captureAttribution();
+    bindContactClicks();
     const consent = readConsent();
     if (consent === "accepted") loadGoogleTags();
     else showConsentBanner();
@@ -1108,7 +1137,7 @@
   }
 
   function hideLoader() {
-    const delay = Math.max(0, 380 - (performance.now() - started));
+    const delay = Math.max(0, 120 - (performance.now() - started));
     setTimeout(() => {
       const loader = document.getElementById("pageLoader");
       loader.classList.add("hide");

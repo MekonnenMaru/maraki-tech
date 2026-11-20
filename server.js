@@ -98,7 +98,7 @@ async function start() {
       cookie: {
         httpOnly: true,
         sameSite: "lax",
-        secure: false,
+        secure: "auto",
         maxAge: sessionMaxAge,
       },
     })
@@ -106,6 +106,74 @@ async function start() {
 
   app.use("/api/admin", adminRoutes);
   app.use("/api", publicRoutes);
+
+  const indexTemplate = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
+  const escAttr = (value) =>
+    String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+  function siteBase(req) {
+    const host = String(req.get("x-forwarded-host") || req.get("host") || "localhost:3000")
+      .split(",")[0]
+      .trim();
+    const proto = String(req.get("x-forwarded-proto") || req.protocol || "http")
+      .split(",")[0]
+      .trim();
+    return `${proto}://${host}`.replace(/\/$/, "");
+  }
+
+  app.get(["/", "/index.html"], async (req, res, next) => {
+    try {
+      const s = await db.getSettings();
+      const base = siteBase(req);
+      const title = s.meta_title || "Maraki Tech";
+      const description = s.meta_description || "";
+      const heroImage = String(s.hero_image || "").trim();
+      const image = /^https:\/\/\S+\.(jpe?g|png|webp)(\?|#|$)/i.test(heroImage)
+        ? heroImage
+        : /^\/uploads\/[a-z0-9]+\.(jpe?g|png|webp)$/i.test(heroImage)
+          ? base + heroImage
+          : "";
+      const sameAs = [s.social_x, s.social_linkedin, s.social_github, s.social_telegram].filter((url) =>
+        /^https:\/\//i.test(url || "")
+      );
+      const org = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: s.footer_brand || "Maraki Tech",
+        url: base + "/",
+        description,
+        email: s.email || undefined,
+        telephone: s.phone || undefined,
+        address: s.location ? { "@type": "PostalAddress", addressLocality: s.location } : undefined,
+        sameAs: sameAs.length ? sameAs : undefined,
+      };
+      const orgJson = JSON.stringify(org).split("<").join("\\u003c");
+      const extra = [
+        `<link rel="canonical" href="${escAttr(base + "/")}" />`,
+        `<meta property="og:url" content="${escAttr(base + "/")}" />`,
+        `<meta property="og:site_name" content="${escAttr(s.footer_brand || "Maraki Tech")}" />`,
+        image ? `<meta property="og:image" content="${escAttr(image)}" />` : "",
+        `<meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}" />`,
+        `<script type="application/ld+json">${orgJson}</script>`,
+      ]
+        .filter(Boolean)
+        .join("\n  ");
+      const setMeta = (html, attr, value) =>
+        html.replace(new RegExp(`(<meta ${attr} content=")[^"]*(")`), (m, a, b) => a + escAttr(value) + b);
+      let html = indexTemplate.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${escAttr(title)}</title>`);
+      html = setMeta(html, 'name="description"', description);
+      html = setMeta(html, 'property="og:title"', title);
+      html = setMeta(html, 'property="og:description"', description);
+      html = html.replace("</head>", () => `  ${extra}\n</head>`);
+      res.set("Cache-Control", "no-cache").type("html").send(html);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   app.get(["/privacy", "/privacy.html"], (req, res) => {
     res.sendFile(path.join(publicDir, "privacy.html"));

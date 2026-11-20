@@ -32,6 +32,7 @@ function cleanMessage(body) {
   const utm_campaign = clip(body.utm_campaign, 160);
   const utm_term = clip(body.utm_term, 160);
   const utm_content = clip(body.utm_content, 160);
+  const gclid = clip(body.gclid, 200);
   const landing_page = clip(body.landing_page, 500);
   const referrer = clip(body.referrer, 500);
 
@@ -81,6 +82,7 @@ function cleanMessage(body) {
     utm_campaign,
     utm_term,
     utm_content,
+    gclid,
     landing_page,
     referrer,
   };

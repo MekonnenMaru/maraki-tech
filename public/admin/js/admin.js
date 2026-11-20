@@ -1073,6 +1073,7 @@
       message.utm_campaign && `utm_campaign=${message.utm_campaign}`,
       message.utm_term && `utm_term=${message.utm_term}`,
       message.utm_content && `utm_content=${message.utm_content}`,
+      message.gclid && `click_id=${message.gclid}`,
     ].filter(Boolean);
     modalRoot.innerHTML = `
       <div class="modal-back">

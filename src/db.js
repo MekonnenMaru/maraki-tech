@@ -251,6 +251,7 @@ async function ensureSchema() {
       utm_campaign VARCHAR(160) NOT NULL DEFAULT '',
       utm_term VARCHAR(160) NOT NULL DEFAULT '',
       utm_content VARCHAR(160) NOT NULL DEFAULT '',
+      gclid VARCHAR(200) NOT NULL DEFAULT '',
       landing_page VARCHAR(500) NOT NULL DEFAULT '',
       referrer VARCHAR(500) NOT NULL DEFAULT '',
       ip VARCHAR(64) NOT NULL DEFAULT '',
@@ -286,6 +287,7 @@ async function ensureMessageColumns() {
     ["utm_campaign", "VARCHAR(160) NOT NULL DEFAULT ''"],
     ["utm_term", "VARCHAR(160) NOT NULL DEFAULT ''"],
     ["utm_content", "VARCHAR(160) NOT NULL DEFAULT ''"],
+    ["gclid", "VARCHAR(200) NOT NULL DEFAULT ''"],
     ["landing_page", "VARCHAR(500) NOT NULL DEFAULT ''"],
     ["referrer", "VARCHAR(500) NOT NULL DEFAULT ''"],
     ["ip", "VARCHAR(64) NOT NULL DEFAULT ''"],
@@ -468,10 +470,10 @@ async function addMessage(message) {
     `INSERT INTO messages (
       name, email, company, service, message,
       country, city, phone, source,
-      utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+      utm_source, utm_medium, utm_campaign, utm_term, utm_content, gclid,
       landing_page, referrer, ip, user_agent,
       is_read, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
     [
       message.name,
       message.email,
@@ -487,6 +489,7 @@ async function addMessage(message) {
       message.utm_campaign || "",
       message.utm_term || "",
       message.utm_content || "",
+      message.gclid || "",
       message.landing_page || "",
       message.referrer || "",
       message.ip || "",
