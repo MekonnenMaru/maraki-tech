@@ -52,7 +52,6 @@ function cleanMessage(body) {
   if (message.name.length < 2) fail(400, "Please enter your name.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(message.email)) fail(400, "Please enter a valid email.");
   if (message.message.length < 10) fail(400, "Tell us a little more about the project (at least a sentence).");
-  if (message.country.length < 2) fail(400, "Please tell us which country you are in.");
 
   return message;
 }

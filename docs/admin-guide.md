@@ -58,7 +58,7 @@ The settings are in tabs:
 | **Hero** | The first screen: headline, text, buttons, image |
 | **Navigation** | Menu labels |
 | **Section headings** | The small label, title and text above each section |
-| **Contact section** | The text beside the form, the form button and the “message sent” text |
+| **Contact section** | The text beside the form, the tip above the optional fields, the form button and the “message sent” text. The form asks only for name, email and message; phone, company, country, city and service are folded under “+ Add phone, company, location (optional)”. |
 | **Call to action** | The banner above the footer |
 | **Footer** | Short description and the three column titles. Footer links reuse your menu and section names. |
 | **Cookie banner** | Banner text and button names (the banner only shows when a Google ID is filled in) |

@@ -164,6 +164,7 @@ const GROUPS = [
     fields: [
       field("contact_aside_title", "Text beside the form: title"),
       field("contact_aside_text", "Text beside the form", "textarea"),
+      field("form_tip", "Tip above the optional fields", "text", { hint: "Empty = no tip." }),
       field("form_button", "Form button"),
       field("form_success", "Message after sending", "text", { hint: "Shown when a message was sent." }),
     ],
@@ -342,6 +343,7 @@ const DEFAULT_SETTINGS = {
   footer_col_company: "Company",
   footer_col_contact: "Contact",
 
+  form_tip: "Tip: adding your phone number and location helps us reply faster.",
   form_button: "Send Message →",
   form_success: "Thanks! Your message has been sent.",
 

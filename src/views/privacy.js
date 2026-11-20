@@ -175,7 +175,7 @@ function defaultSections(s, { base, sessionHours, shares = [] }) {
       id: "collect",
       title: "What we collect",
       text: [
-        "- **When you send the contact form:** your name, email, country and message, plus anything optional you add (company, phone, city, the service you’re interested in).",
+        "- **When you send the contact form:** your name, email and message, plus anything optional you add (phone, company, country, city, the service you’re interested in).",
         "- **Where you came from:** with the form we also save the page you first landed on, the website that linked to us, and campaign codes in the link (UTM tags and Google click IDs), so we know which ads and links bring enquiries.",
         "- **Technical details with each message:** your IP address and browser type, to block spam and abuse.",
         "- **Visit counter:** we count visits per day for our own dashboard. This count stores only the date and time — no IP address, name or other personal data.",

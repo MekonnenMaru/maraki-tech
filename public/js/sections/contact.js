@@ -54,27 +54,33 @@ export function contactHtml(s, services) {
             ${field({ id: "name", label: "Full Name", placeholder: "Your name", required: true, max: 80, autocomplete: "name" })}
             ${field({ id: "email", label: "Email", type: "email", placeholder: "you@company.com", required: true, max: 160, autocomplete: "email" })}
           </div>
-          <div class="form-row">
-            ${field({ id: "company", label: "Company", max: 120, autocomplete: "organization" })}
-            ${field({ id: "phone_contact", name: "phone", label: "Phone", type: "tel", max: 40, autocomplete: "tel" })}
-          </div>
-          <div class="form-row">
-            ${field({ id: "country", label: "Country", placeholder: "Where are you based?", required: true, max: 80, autocomplete: "country-name" })}
-            ${field({ id: "city", label: "City", max: 80, autocomplete: "address-level2" })}
-          </div>
-
-          <div class="form-group">
-            <label for="service">Service</label>
-            <select id="service" name="service">
-              <option value="">Select a service</option>
-              ${serviceOptions}
-              <option value="Other">Other</option>
-            </select>
-          </div>
           <div class="form-group">
             <label for="message">Message</label>
             <textarea id="message" name="message" placeholder="Tell us about your project..." required maxlength="4000"></textarea>
           </div>
+
+          ${s.form_tip ? `<p class="form-tip">💡 ${esc(s.form_tip)}</p>` : ""}
+
+          <!-- Optional details, folded away so the form stays short -->
+          <details class="form-more">
+            <summary>+ Add phone, company, location <span>(optional)</span></summary>
+            <div class="form-row">
+              ${field({ id: "phone_contact", name: "phone", label: "Phone", type: "tel", max: 40, autocomplete: "tel" })}
+              ${field({ id: "company", label: "Company", max: 120, autocomplete: "organization" })}
+            </div>
+            <div class="form-row">
+              ${field({ id: "country", label: "Country", max: 80, autocomplete: "country-name" })}
+              ${field({ id: "city", label: "City", max: 80, autocomplete: "address-level2" })}
+            </div>
+            <div class="form-group">
+              <label for="service">Service</label>
+              <select id="service" name="service">
+                <option value="">Select a service</option>
+                ${serviceOptions}
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </details>
 
           <button type="submit" class="form-submit">${esc(s.form_button || "Send Message →")}</button>
           <p class="form-status" id="formStatus" role="status"></p>
