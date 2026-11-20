@@ -8,6 +8,9 @@ const db = require("../db");
 const { DEFAULT_SETTINGS, GROUPS } = require("../settings");
 const { COLLECTIONS, sanitize, present, fail } = require("../content");
 const { limited, strike, clear } = require("../rate-limit");
+const config = require("../config");
+const { siteUrl } = require("../views/html");
+const { privacySections, sectionPreview, SECTION_IDS } = require("../views/privacy");
 
 const router = express.Router();
 const WINDOW = 15 * 60 * 1000;
@@ -272,6 +275,75 @@ router.put("/settings", async (req, res, next) => {
     if (policyChanged && !dateEdited) values.privacy_updated = today();
 
     res.json(await db.saveSettings(values));
+  } catch (error) {
+    next(error);
+  }
+});
+
+/* ---------- Privacy policy (admin menu → Privacy policy) ---------- */
+
+async function privacyState(req) {
+  const settings = await db.getSettings();
+  const overrides = await db.getPrivacyOverrides();
+  const base = siteUrl(req);
+  const sections = privacySections(settings, { base, sessionHours: config.sessionHours }, overrides).map((section) => ({
+    id: section.id,
+    title: section.title,
+    text: section.text,
+    defaultTitle: section.defaultTitle,
+    defaultText: section.defaultText,
+    edited: section.edited,
+    hasAuto: !!section.auto,
+    preview: sectionPreview(section, settings, base),
+    // Short plain-text preview for the list (placeholders filled in, no tables).
+    snippet: sectionPreview({ ...section, auto: "" }, settings, base)
+      .replace(/<\/(p|li)>/g, " ")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+      .replace(/\s+/g, " ")
+      .trim(),
+  }));
+  return { sections, updated: settings.privacy_updated };
+}
+
+router.get("/privacy", async (req, res, next) => {
+  try {
+    res.json(await privacyState(req));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Save edited text for one section.
+router.put("/privacy/sections/:id", async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    if (!SECTION_IDS.includes(id)) fail(404, "Unknown section.");
+    const title = String((req.body && req.body.title) || "").trim();
+    const text = String((req.body && req.body.text) || "").replace(/\r\n/g, "\n").trim();
+    if (title.length > 120) fail(400, "The title is too long (120 characters at most).");
+    if (text.length > 20000) fail(400, "The text is too long (20,000 characters at most).");
+
+    const overrides = await db.getPrivacyOverrides();
+    overrides[id] = { title, text };
+    await db.savePrivacyOverrides(overrides);
+    await db.saveSettings({ privacy_updated: today() });
+    res.json(await privacyState(req));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Go back to the automatic text for one section.
+router.delete("/privacy/sections/:id", async (req, res, next) => {
+  try {
+    const overrides = await db.getPrivacyOverrides();
+    if (overrides[req.params.id]) {
+      delete overrides[req.params.id];
+      await db.savePrivacyOverrides(overrides);
+      await db.saveSettings({ privacy_updated: today() });
+    }
+    res.json(await privacyState(req));
   } catch (error) {
     next(error);
   }

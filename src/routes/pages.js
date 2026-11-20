@@ -96,8 +96,8 @@ router.get(["/", "/index.html"], async (req, res, next) => {
 // Text lives in src/views/privacy.js.
 router.get(["/privacy", "/privacy.html"], async (req, res, next) => {
   try {
-    const settings = await db.getSettings();
-    const html = privacyPage(settings, { base: siteUrl(req), sessionHours: config.sessionHours });
+    const [settings, overrides] = await Promise.all([db.getSettings(), db.getPrivacyOverrides()]);
+    const html = privacyPage(settings, { base: siteUrl(req), sessionHours: config.sessionHours, overrides });
     res.set("Cache-Control", "no-cache").type("html").send(html);
   } catch (error) {
     next(error);

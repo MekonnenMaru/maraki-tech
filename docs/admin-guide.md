@@ -12,6 +12,7 @@ Changes appear on the website after a refresh. You don't need any code.
 | **Overview** | Visits, new messages, the *Ready for Google Ads* checklist, latest leads |
 | **Inbox** | Messages from the contact form |
 | **Site settings** | All texts, links, images, contact details, section on/off switches, Google IDs |
+| **Privacy policy** | The full text of your Privacy Policy page, section by section |
 | **Stats, Services, Products, Pricing** | The cards on the page |
 | **Process, Team, Testimonials, FAQ, Technology** | More sections of the page |
 | **Entertainment** | Bingo, Keno and Spin apps (keep hidden while advertising) |
@@ -34,30 +35,6 @@ The settings are in tabs:
 | **Call to action** | The banner above the footer |
 | **Footer and social** | Footer text and social links (empty = icon hidden) |
 | **Google Ads, AdSense & Analytics** | IDs from Google. See the guides in this folder. |
-| **Privacy policy** | Legal name, privacy email, newsletter, retention, minimum age, extra text from a lawyer. See below. |
-
-### Privacy policy
-
-The Privacy Policy page (`/privacy`) is written for you. It always shows:
-
-- your contact details from the **Contact details** tab,
-- every cookie and browser storage item the website really uses,
-- the Google Analytics / Google Ads / AdSense sections, **only** when their IDs are filled in.
-
-In the **Privacy policy** tab you control the rest:
-
-| Setting | What it changes on the page |
-| --- | --- |
-| Newsletter switch | Off: “We do not add you to a mailing list.” On: explains you may send news, with an unsubscribe option. |
-| Legal company name | Who is responsible (e.g. *Maraki Technology PLC*) |
-| Privacy contact email | The email shown for privacy questions |
-| How long you keep contact messages | The retention sentence |
-| Minimum age | “We do not knowingly collect information from children under …” |
-| Extra section | Any text from your lawyer, shown as *Additional information* |
-| Last updated | Changes to today on its own when you change this tab or a Google ID |
-
-**Recommended:** ask a lawyer to read `/privacy` once (Ethiopia: Personal Data Protection
-Proclamation No. 1321/2024; EU/UK clients: GDPR). Paste their additions into **Extra section**.
 
 **Green words in titles:** write `{highlight}` in the title where the green words go,
 and put the green words in the *highlight* box.
@@ -66,6 +43,42 @@ Example: title `Technology {highlight} business forward.` + highlight `that move
 Click **Save changes** at the bottom. The bar says *Unsaved changes* until you save.
 
 Google IDs are checked when you save. A wrong format shows an error and nothing is saved.
+
+---
+
+## Privacy policy
+
+Menu → **Privacy policy**. This is the full text of your public page `https://your-domain/privacy`.
+
+**Company details** (top card): newsletter switch, legal company name, minimum age, privacy email,
+how long you keep messages, and an optional extra section. Click **Save details**.
+
+**Sections** (list below): every part of the policy, in page order.
+
+- Click a section (or ✏️) to **edit** its title and text, then **Save section**.
+- A green **Automatic** label means the text is written for you and updates itself when your settings change
+  (for example when you add a Google ID, the Google parts appear on their own).
+- An orange **Edited** label means you changed it. It stays exactly as you wrote it.
+- **Reset** (↺) brings back the automatic text.
+
+Some parts are always automatic and can't be edited, so they are never wrong:
+your email/phone/location (from Site settings → Contact details) and the cookie table.
+
+**Writing text:**
+
+| Write | You get |
+| --- | --- |
+| an empty line | a new paragraph |
+| `- something` at the start of a line | a bullet point |
+| `**words**` | **bold** words |
+| `[text](https://example.com)` | a link |
+| `{company}` `{legal_name}` `{email}` `{domain}` `{min_age}` `{retention}` | your current settings |
+
+The **Last updated** date at the top of the page changes to today on its own whenever you save
+a section, the company details, or a Google ID.
+
+**Recommended:** ask a lawyer to read `/privacy` once (Ethiopia: Personal Data Protection
+Proclamation No. 1321/2024; EU/UK clients: GDPR). Make their changes directly in the sections.
 
 ---
 

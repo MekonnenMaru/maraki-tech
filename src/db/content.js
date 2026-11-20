@@ -54,6 +54,27 @@ async function saveSettings(values) {
   return getSettings();
 }
 
+// Privacy policy sections edited in the dashboard: { sectionId: { title, text } }.
+// Stored as JSON in the settings table under its own key.
+const PRIVACY_OVERRIDES_KEY = "privacy_overrides";
+
+async function getPrivacyOverrides() {
+  const row = await queryOne("SELECT value FROM settings WHERE `key` = ?", [PRIVACY_OVERRIDES_KEY]);
+  try {
+    const parsed = JSON.parse(row?.value || "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+async function savePrivacyOverrides(overrides) {
+  await execute(
+    "INSERT INTO settings (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)",
+    [PRIVACY_OVERRIDES_KEY, JSON.stringify(overrides)]
+  );
+}
+
 async function listRows(table, { visibleOnly = false } = {}) {
   assertTable(table);
   const where = visibleOnly ? "WHERE visible = 1" : "";
@@ -115,6 +136,8 @@ async function countRows(table) {
 module.exports = {
   getSettings,
   saveSettings,
+  getPrivacyOverrides,
+  savePrivacyOverrides,
   listRows,
   getRow,
   insertRow,

@@ -10,6 +10,10 @@ import { view } from "../core/shell.js";
 let schema = null; // cached: it only changes when the server code changes
 const TAB_KEY = "maraki-settings-tab";
 
+// Groups that have their own page in the menu instead of a tab here.
+const OWN_PAGE = ["privacy"];
+const tabGroups = () => schema.groups.filter((group) => !OWN_PAGE.includes(group.id));
+
 // Long text fields get the full width.
 const WIDE_KEYS = /title|text|description|href|url|blurb|email|highlight|alt|tagline/;
 
@@ -65,7 +69,8 @@ export async function renderSettings() {
   schema = loadedSchema;
 
   const saved = storage.get(TAB_KEY);
-  const activeId = schema.groups.some((group) => group.id === saved) ? saved : schema.groups[0].id;
+  const groups = tabGroups();
+  const activeId = groups.some((group) => group.id === saved) ? saved : groups[0].id;
 
   view().innerHTML = `
     <div class="page-head">
@@ -77,12 +82,12 @@ export async function renderSettings() {
 
     <form data-form="save-settings" id="settingsForm" class="settings">
       <nav class="tabs" role="tablist">
-        ${schema.groups.map((group) => `
+        ${groups.map((group) => `
           <button type="button" role="tab" class="tab ${group.id === activeId ? "active" : ""}" data-action="settings-tab" data-tab="${esc(group.id)}">${esc(group.title)}</button>
         `).join("")}
       </nav>
 
-      ${schema.groups.map((group) => groupHtml(group, settings, group.id === activeId)).join("")}
+      ${groups.map((group) => groupHtml(group, settings, group.id === activeId)).join("")}
 
       <div class="savebar">
         <span class="savebar-note" id="saveNote">All changes saved</span>
@@ -119,15 +124,13 @@ registerActions({
 registerForms({
   "save-settings": async (form) => {
     const values = {};
-    for (const group of schema.groups) {
+    for (const group of tabGroups()) {
       for (const field of group.fields) {
         const input = form.elements[field.key];
         values[field.key] = field.type === "toggle" ? (input.checked ? "1" : "0") : input.value.trim();
       }
     }
-    const saved = await api("/api/admin/settings", { method: "PUT", body: values });
-    // The server may fill some values itself (e.g. the privacy "Last updated" date).
-    if (form.elements.privacy_updated) form.elements.privacy_updated.value = saved.privacy_updated || "";
+    await api("/api/admin/settings", { method: "PUT", body: values });
     markUnsaved(false);
     toast("Saved. Refresh the website to see the changes.");
   },

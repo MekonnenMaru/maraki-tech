@@ -14,12 +14,14 @@ import { renderMessages } from "./pages/messages.js";
 import { renderSettings } from "./pages/settings.js";
 import { renderList, isList } from "./pages/list.js";
 import { renderAccount } from "./pages/account.js";
+import { renderPrivacy } from "./pages/privacy.js";
 import { toast, storage } from "./core/util.js";
 
 registerPage("dashboard", renderDashboard);
 registerPage("messages", renderMessages);
 registerPage("content", renderSettings);
 registerPage("account", renderAccount);
+registerPage("privacy", renderPrivacy);
 registerListPage(renderList, isList);
 
 /* ---------- Sign in / out ---------- */

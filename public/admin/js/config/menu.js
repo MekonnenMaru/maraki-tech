@@ -13,6 +13,7 @@ export const MENU = [
     title: "Website",
     items: [
       ["content", "Site settings", "settings"],
+      ["privacy", "Privacy policy", "shield"],
       ["stats", "Stats", "chart"],
       ["services", "Services", "layers"],
       ["products", "Products", "box"],
