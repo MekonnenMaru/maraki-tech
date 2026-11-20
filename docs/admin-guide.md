@@ -34,6 +34,30 @@ The settings are in tabs:
 | **Call to action** | The banner above the footer |
 | **Footer and social** | Footer text and social links (empty = icon hidden) |
 | **Google Ads, AdSense & Analytics** | IDs from Google. See the guides in this folder. |
+| **Privacy policy** | Legal name, privacy email, newsletter, retention, minimum age, extra text from a lawyer. See below. |
+
+### Privacy policy
+
+The Privacy Policy page (`/privacy`) is written for you. It always shows:
+
+- your contact details from the **Contact details** tab,
+- every cookie and browser storage item the website really uses,
+- the Google Analytics / Google Ads / AdSense sections, **only** when their IDs are filled in.
+
+In the **Privacy policy** tab you control the rest:
+
+| Setting | What it changes on the page |
+| --- | --- |
+| Newsletter switch | Off: “We do not add you to a mailing list.” On: explains you may send news, with an unsubscribe option. |
+| Legal company name | Who is responsible (e.g. *Maraki Technology PLC*) |
+| Privacy contact email | The email shown for privacy questions |
+| How long you keep contact messages | The retention sentence |
+| Minimum age | “We do not knowingly collect information from children under …” |
+| Extra section | Any text from your lawyer, shown as *Additional information* |
+| Last updated | Changes to today on its own when you change this tab or a Google ID |
+
+**Recommended:** ask a lawyer to read `/privacy` once (Ethiopia: Personal Data Protection
+Proclamation No. 1321/2024; EU/UK clients: GDPR). Paste their additions into **Extra section**.
 
 **Green words in titles:** write `{highlight}` in the title where the green words go,
 and put the green words in the *highlight* box.

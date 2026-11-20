@@ -158,6 +158,36 @@ const GROUPS = [
       }),
     ],
   },
+  {
+    id: "privacy",
+    title: "Privacy policy",
+    intro:
+      "Your answers fill in the Privacy Policy page (/privacy). Cookies, Google services and contact details are added automatically. Ask a lawyer to check the page, then paste any extra text they give you below.",
+    fields: [
+      field("privacy_newsletter", "We may send newsletters to people who contact us", "toggle"),
+      field("privacy_legal_name", "Legal company name", "text", {
+        placeholder: "e.g. Maraki Technology PLC",
+        hint: "Empty = the footer brand name.",
+      }),
+      field("privacy_min_age", "Minimum age of visitors", "text", { placeholder: "16" }),
+      field("privacy_email", "Privacy contact email", "text", {
+        placeholder: "e.g. privacy@maraki.tech",
+        hint: "Empty = the main contact email.",
+      }),
+      field("privacy_retention", "How long you keep contact messages", "textarea", {
+        wide: true,
+        hint: "Finishes the sentence “Contact messages are kept …”",
+      }),
+      field("privacy_extra", "Extra section (optional)", "textarea", {
+        wide: true,
+        hint: "For example text from your lawyer. Leave an empty line between paragraphs. Shown before “Contact us”.",
+      }),
+      field("privacy_updated", "Last updated", "text", {
+        placeholder: "YYYY-MM-DD",
+        hint: "Set automatically when you change this tab or a Google ID. You can also type a date.",
+      }),
+    ],
+  },
 ];
 
 const DEFAULT_SETTINGS = {
@@ -279,6 +309,14 @@ const DEFAULT_SETTINGS = {
   google_ads_id: "",
   google_ads_conversion_label: "",
   adsense_client_id: "",
+
+  privacy_newsletter: "0",
+  privacy_legal_name: "",
+  privacy_email: "",
+  privacy_retention: "until we have finished handling your enquiry and delete them, or until you ask us to delete them",
+  privacy_min_age: "16",
+  privacy_extra: "",
+  privacy_updated: "",
 };
 
 const keys = GROUPS.flatMap((group) => group.fields.map((item) => item.key));

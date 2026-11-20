@@ -1,12 +1,31 @@
 // The Privacy Policy page, built from the admin settings.
 //
-// - Company name, email, phone and location come from Site settings (database).
+// - Admin → Site settings → "Privacy policy" tab: legal name, privacy email, newsletter,
+//   retention, minimum age, an extra section, and the "Last updated" date.
+// - Email, phone and location come from the "Contact details" tab.
 // - The Google sections only appear when that service is switched on (its ID is filled in).
-// - When you change what the site collects or stores, update the text below
-//   AND the date in POLICY_UPDATED.
+// - When you change the text in THIS FILE, also update TEXT_UPDATED below.
+//   (Changes made in the dashboard update the date automatically.)
 const { esc, telHref } = require("./html");
 
-const POLICY_UPDATED = "20 November 2026";
+const TEXT_UPDATED = "2026-11-20"; // last change to the wording in this file (YYYY-MM-DD)
+
+// The later of: this file's wording date, or the last privacy change made in the dashboard.
+function lastUpdated(s) {
+  const fromSettings = /^\d{4}-\d{2}-\d{2}$/.test(s.privacy_updated || "") ? s.privacy_updated : "";
+  const latest = fromSettings > TEXT_UPDATED ? fromSettings : TEXT_UPDATED;
+  return new Date(`${latest}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+// Text with empty lines between paragraphs → <p> paragraphs (no HTML allowed).
+function paragraphs(text) {
+  return String(text || "")
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => `<p>${esc(block).replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
 
 const external = (href, text) => `<a href="${href}" rel="noopener noreferrer" target="_blank">${text}</a>`;
 
@@ -23,7 +42,7 @@ function servicesInUse(s) {
 /* ---------- Sections ---------- */
 
 function contactLines(s) {
-  const email = String(s.email || "").trim();
+  const email = String(s.privacy_email || s.email || "").trim();
   const phone = String(s.phone || "").trim();
   const location = String(s.location || "").trim();
   const tel = telHref(phone);
@@ -102,6 +121,11 @@ function adsenseSection(on) {
 
 function privacyPage(s, { base, sessionHours }) {
   const company = esc(s.footer_brand || "Maraki Tech");
+  const legalName = esc(String(s.privacy_legal_name || "").trim() || s.footer_brand || "Maraki Tech");
+  const minAge = /^\d{1,2}$/.test(s.privacy_min_age || "") ? s.privacy_min_age : "16";
+  const retention = esc(String(s.privacy_retention || "").trim().replace(/\.$/, "") || "until we no longer need them for your enquiry");
+  const newsletter = s.privacy_newsletter === "1";
+  const extra = paragraphs(s.privacy_extra);
   const brand = esc(s.brand_name || "MARAKI");
   const domain = esc(base.replace(/^https?:\/\//, ""));
   const on = servicesInUse(s);
@@ -160,11 +184,11 @@ function privacyPage(s, { base, sessionHours }) {
   <main id="content" class="legal-wrap">
     <p class="section-label">Legal</p>
     <h1 class="section-title">Privacy Policy</h1>
-    <p class="section-description">Last updated: ${POLICY_UPDATED}. This page explains what ${company} collects when you visit ${domain} or contact us, why, and what you can do about it.</p>
+    <p class="section-description">Last updated: ${lastUpdated(s)}. This page explains what ${company} collects when you visit ${domain} or contact us, why, and what you can do about it.</p>
 
     <article class="legal-card">
       <h2>Who we are</h2>
-      <p>${company} is responsible for this website and the information described here.</p>
+      <p>${legalName} is responsible for this website and the information described here.</p>
       ${contact.length ? `<p>${contact.join("<br>")}</p>` : ""}
 
       <h2>What we collect</h2>
@@ -182,7 +206,9 @@ function privacyPage(s, { base, sessionHours }) {
         <li>To understand which pages, ads and links bring real enquiries.</li>
         <li>To keep the website safe from spam and misuse.</li>
       </ul>
-      <p>We use your contact details only to reply to you about your enquiry. We do not add you to a mailing list.</p>
+      ${newsletter
+        ? "<p>We use your contact details to reply to your enquiry. We may also send you occasional news about our services; every message includes a way to unsubscribe, and you can ask us to stop at any time.</p>"
+        : "<p>We use your contact details only to reply to you about your enquiry. We do not add you to a mailing list.</p>"}
 
       <h2>Cookies and browser storage</h2>
       <p>This is everything the website stores in your browser:</p>
@@ -197,7 +223,7 @@ function privacyPage(s, { base, sessionHours }) {
 
       <h2>How long we keep information</h2>
       <ul>
-        <li><strong>Contact messages:</strong> until we have finished handling your enquiry and delete them, or until you ask us to delete them.</li>
+        <li><strong>Contact messages:</strong> ${retention}.</li>
         <li><strong>Visit counts:</strong> kept as dates and times only.</li>
         <li><strong>Browser storage:</strong> see the table above.</li>
       </ul>
@@ -222,10 +248,12 @@ function privacyPage(s, { base, sessionHours }) {
       <p>To use these rights, contact us using the details below. We will reply as soon as we can.</p>
 
       <h2>Children</h2>
-      <p>This website is meant for businesses and adults. We do not knowingly collect information from children under 16.</p>
+      <p>This website is meant for businesses and adults. We do not knowingly collect information from children under ${minAge}.</p>
 
       <h2>Changes to this policy</h2>
       <p>If we change how we handle information, we will update this page and the date at the top.</p>
+
+      ${extra ? `<h2>Additional information</h2>${extra}` : ""}
 
       <h2>Contact us about privacy</h2>
       ${contact.length ? `<p>${contact.join("<br>")}</p>` : '<p>Please use the <a href="/#contact">contact form</a>.</p>'}

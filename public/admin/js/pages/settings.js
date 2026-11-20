@@ -125,7 +125,9 @@ registerForms({
         values[field.key] = field.type === "toggle" ? (input.checked ? "1" : "0") : input.value.trim();
       }
     }
-    await api("/api/admin/settings", { method: "PUT", body: values });
+    const saved = await api("/api/admin/settings", { method: "PUT", body: values });
+    // The server may fill some values itself (e.g. the privacy "Last updated" date).
+    if (form.elements.privacy_updated) form.elements.privacy_updated.value = saved.privacy_updated || "";
     markUnsaved(false);
     toast("Saved. Refresh the website to see the changes.");
   },

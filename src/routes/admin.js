@@ -213,17 +213,35 @@ router.get("/schema", (req, res) => {
   res.json({ groups: GROUPS });
 });
 
-// Google IDs must have the right shape. An empty value switches the service off.
-const ID_FORMATS = {
+// Settings that must have a certain shape. An empty value is always allowed
+// (for Google IDs it switches that service off).
+const FORMATS = {
   ga4_measurement_id: [/^G-[A-Z0-9]{4,20}$/, "The GA4 ID looks like G-XXXXXXXXXX."],
   google_ads_id: [/^AW-\d{6,15}$/, "The Google Ads ID looks like AW-123456789."],
   google_ads_conversion_label: [/^[\w-]{6,40}$/, "The conversion label is the short code after the slash, e.g. AbC-D_efG12."],
   adsense_client_id: [/^ca-pub-\d{10,20}$/, "The AdSense publisher ID looks like ca-pub-1234567890123456."],
+  privacy_email: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "The privacy contact email doesn't look like an email address."],
+  privacy_min_age: [/^\d{1,2}$/, "The minimum age must be a number, e.g. 16."],
+  privacy_updated: [/^\d{4}-\d{2}-\d{2}$/, "Write the “Last updated” date as YYYY-MM-DD, e.g. 2026-11-20."],
 };
 
-function checkIdFormat(key, value) {
-  const rule = ID_FORMATS[key];
+function checkFormat(key, value) {
+  const rule = FORMATS[key];
   if (rule && value && !rule[0].test(value)) fail(400, rule[1]);
+}
+
+// Most settings are short. Text a lawyer provides can be long.
+const MAX_LENGTH = { privacy_extra: 20000 };
+
+// Changing any of these changes what the Privacy Policy says,
+// so its "Last updated" date moves to today automatically.
+const PRIVACY_KEYS = [
+  "privacy_newsletter", "privacy_legal_name", "privacy_email", "privacy_retention", "privacy_min_age", "privacy_extra",
+  "ga4_measurement_id", "google_ads_id", "adsense_client_id",
+];
+
+function today() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" }); // YYYY-MM-DD
 }
 
 router.put("/settings", async (req, res, next) => {
@@ -231,22 +249,29 @@ router.put("/settings", async (req, res, next) => {
     const input = req.body;
     if (!input || typeof input !== "object" || Array.isArray(input)) fail(400, "Invalid data.");
 
-    const next = {};
+    const values = {};
     for (const key of Object.keys(DEFAULT_SETTINGS)) {
       if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
       let value = input[key];
       if (typeof value === "boolean") value = value ? "1" : "0";
       value = value == null ? "" : String(value).trim();
-      if (key.startsWith("show_")) value = value === "1" || value === "true" ? "1" : "0";
-      if (value.length > 2000) fail(400, `${key.replace(/_/g, " ")} is too long.`);
+      if (key.startsWith("show_") || key === "privacy_newsletter") value = value === "1" || value === "true" ? "1" : "0";
+      if (value.length > (MAX_LENGTH[key] || 2000)) fail(400, `${key.replace(/_/g, " ")} is too long.`);
       if (key === "ga4_measurement_id" || key === "google_ads_id") value = value.toUpperCase();
-      if (key === "adsense_client_id") value = value.toLowerCase();
-      checkIdFormat(key, value);
-      next[key] = value;
+      if (key === "adsense_client_id" || key === "privacy_email") value = value.toLowerCase();
+      checkFormat(key, value);
+      values[key] = value;
     }
 
-    if (!Object.keys(next).length) fail(400, "Nothing to update.");
-    res.json(await db.saveSettings(next));
+    if (!Object.keys(values).length) fail(400, "Nothing to update.");
+
+    // Policy text changed and the date wasn't edited by hand → today's date.
+    const current = await db.getSettings();
+    const policyChanged = PRIVACY_KEYS.some((key) => key in values && values[key] !== current[key]);
+    const dateEdited = "privacy_updated" in values && values.privacy_updated !== current.privacy_updated;
+    if (policyChanged && !dateEdited) values.privacy_updated = today();
+
+    res.json(await db.saveSettings(values));
   } catch (error) {
     next(error);
   }
