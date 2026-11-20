@@ -92,7 +92,7 @@ function googleSection(on) {
   if (!on.analytics && !on.ads) return "";
   const names = [on.analytics && "Google Analytics 4", on.ads && "Google Ads conversion tracking"].filter(Boolean).join(" and ");
   return `
-    <h2>Analytics and ad measurement</h2>
+    <h3>Analytics and ad measurement</h3>
     <p>We use ${names}. These load <strong>only after you click <em>Accept</em></strong> on the cookie banner. If you choose <em>Essential only</em>, they do not load.</p>
     <ul>
       ${on.analytics ? "<li><strong>Google Analytics 4</strong> shows us how many people visit, from which countries and devices, and which pages they use. IP addresses are anonymised.</li>" : ""}
@@ -106,7 +106,7 @@ function googleSection(on) {
 function adsenseSection(on) {
   if (!on.adsense) return "";
   return `
-    <h2>Ads on this site (Google AdSense)</h2>
+    <h3>Ads on this site (Google AdSense)</h3>
     <ul>
       <li>Third-party vendors, including Google, use cookies to serve ads based on your prior visits to this website or other websites.</li>
       <li>Google’s use of advertising cookies enables it and its partners to serve ads to you based on your visits to this site and/or other sites on the Internet.</li>
@@ -128,6 +128,7 @@ function privacyPage(s, { base, sessionHours }) {
   const extra = paragraphs(s.privacy_extra);
   const brand = esc(s.brand_name || "MARAKI");
   const domain = esc(base.replace(/^https?:\/\//, ""));
+  const https = base.startsWith("https://");
   const on = servicesInUse(s);
   const contact = contactLines(s);
   const sharedWith = [
@@ -186,31 +187,50 @@ function privacyPage(s, { base, sessionHours }) {
     <h1 class="section-title">Privacy Policy</h1>
     <p class="section-description">Last updated: ${lastUpdated(s)}. This page explains what ${company} collects when you visit ${domain} or contact us, why, and what you can do about it.</p>
 
+    <aside class="legal-summary">
+      <h2>In short</h2>
+      <ul>
+        <li>We only collect what you type into the contact form, plus basic technical details to stop spam.</li>
+        <li>We use it to reply to you${newsletter ? " and, if you agree, to send occasional news" : ""}. We never sell it.</li>
+        <li>${on.analytics || on.ads ? "Analytics and advertising cookies load only if you click <em>Accept</em>." : "We don’t use analytics or advertising cookies."}${on.adsense ? " Google may show ads on this site." : ""}</li>
+        <li>You can ask us to see, correct or delete your information at any time.</li>
+      </ul>
+    </aside>
+
     <article class="legal-card">
-      <h2>Who we are</h2>
-      <p>${legalName} is responsible for this website and the information described here.</p>
+      <h2>1. Who we are</h2>
+      <p>${legalName} (“we”, “us”) runs this website and is responsible for the personal information described here (the “data controller”).</p>
       ${contact.length ? `<p>${contact.join("<br>")}</p>` : ""}
 
-      <h2>What we collect</h2>
+      <h2>2. What we collect</h2>
       <ul>
         <li><strong>When you send the contact form:</strong> your name, email, country and message, plus anything optional you add (company, phone, city, the service you’re interested in).</li>
         <li><strong>Where you came from:</strong> with the form we also save the page you first landed on, the website that linked to us, and campaign codes in the link (UTM tags and Google click IDs), so we know which ads and links bring enquiries.</li>
         <li><strong>Technical details with each message:</strong> your IP address and browser type, to block spam and abuse.</li>
         <li><strong>Visit counter:</strong> we count visits per day for our own dashboard. This count stores only the date and time — no IP address, name or other personal data.</li>
       </ul>
-      <p>We do not ask for payment details, passwords or sensitive personal data through this website.</p>
+      <p>We do not ask for payment details, passwords, identity documents or sensitive personal data (such as health, religion or political views) through this website. Please don’t include them in your message.</p>
 
-      <h2>Why we use it</h2>
-      <ul>
-        <li>To answer your enquiry and discuss a possible project with you.</li>
-        <li>To understand which pages, ads and links bring real enquiries.</li>
-        <li>To keep the website safe from spam and misuse.</li>
-      </ul>
+      <h2>3. Why we use it, and on what legal basis</h2>
+      <div class="legal-table">
+        <table>
+          <thead><tr><th>What we do</th><th>Why we are allowed to</th></tr></thead>
+          <tbody>
+            <tr><td data-label="What we do">Reply to your enquiry and discuss a possible project</td><td data-label="Legal basis">You asked us to (steps before a possible contract) and our legitimate interest in answering business enquiries</td></tr>
+            <tr><td data-label="What we do">Record which page, ad or link brought you to us</td><td data-label="Legal basis">Our legitimate interest in knowing which marketing works. Saved only together with a message you send.</td></tr>
+            <tr><td data-label="What we do">Keep your IP address and browser type with your message, and limit repeated sending</td><td data-label="Legal basis">Our legitimate interest in protecting the website from spam and abuse</td></tr>
+            ${on.analytics || on.ads ? '<tr><td data-label="What we do">Analytics and ad measurement cookies</td><td data-label="Legal basis">Your consent (the <em>Accept</em> button). You can withdraw it at any time.</td></tr>' : ""}
+            ${newsletter ? '<tr><td data-label="What we do">Send occasional news about our services</td><td data-label="Legal basis">Your consent or our existing contact with you. Every message has an unsubscribe option.</td></tr>' : ""}
+            <tr><td data-label="What we do">Keep records when the law requires it</td><td data-label="Legal basis">Our legal obligations</td></tr>
+          </tbody>
+        </table>
+      </div>
       ${newsletter
-        ? "<p>We use your contact details to reply to your enquiry. We may also send you occasional news about our services; every message includes a way to unsubscribe, and you can ask us to stop at any time.</p>"
+        ? "<p>We may send you occasional news about our services. Every message includes a way to unsubscribe, and you can ask us to stop at any time.</p>"
         : "<p>We use your contact details only to reply to you about your enquiry. We do not add you to a mailing list.</p>"}
+      <p>We do not make decisions about you by automated means alone, and we do not build profiles of individual visitors.</p>
 
-      <h2>Cookies and browser storage</h2>
+      <h2>4. Cookies and browser storage</h2>
       <p>This is everything the website stores in your browser:</p>
       ${storageTable(on, sessionHours)}
       ${on.analytics || on.ads ? "<p>You can change your cookie choice at any time by clearing this site’s data in your browser. The banner will then ask again.</p>" : ""}
@@ -218,44 +238,51 @@ function privacyPage(s, { base, sessionHours }) {
       ${googleSection(on)}
       ${adsenseSection(on)}
 
-      <h2>Spam protection</h2>
+      <h2>5. Spam protection and server logs</h2>
       <p>To stop automated spam, the server briefly remembers how often an IP address sends the contact form (at most 5 messages per hour) or tries to sign in to the admin area. This is kept in memory only, never saved, and forgotten within an hour.</p>
+      <p>Like almost every website, our hosting provider may keep standard technical logs (IP address, time and page requested) for security and troubleshooting, normally for a short period.</p>
 
-      <h2>How long we keep information</h2>
+      <h2>6. How long we keep information</h2>
       <ul>
         <li><strong>Contact messages:</strong> ${retention}.</li>
-        <li><strong>Visit counts:</strong> kept as dates and times only.</li>
-        <li><strong>Browser storage:</strong> see the table above.</li>
+        <li><strong>Visit counts:</strong> kept as dates and times only, with no personal data.</li>
+        <li><strong>Browser storage:</strong> see the table in section 4.</li>
       </ul>
 
-      <h2>Who we share it with</h2>
-      <p>We do not sell or rent your personal information.${
-        sharedWith.length
-          ? ` We use ${sharedWith.join(", ")} as described above.`
-          : ""
-      } Our website hosting provider stores the data on our behalf. We may share information if the law requires it.</p>
-
-      <h2>How we protect it</h2>
-      <p>Messages are stored in our own database, which only authorised ${company} staff can access through a password-protected admin area. Staff passwords are stored only as secure one-way hashes. Please do not send highly sensitive information through the contact form.</p>
-
-      <h2>Your rights</h2>
+      <h2>7. Who we share it with</h2>
+      <p>We do not sell or rent your personal information. We only share it with:</p>
       <ul>
-        <li>Ask what information we hold about you.</li>
-        <li>Ask us to correct or delete your message and contact details.</li>
-        ${on.analytics || on.ads ? "<li>Refuse analytics and advertising cookies by choosing <em>Essential only</em>.</li>" : ""}
-        <li>Clear cookies and site data in your browser at any time.</li>
+        <li><strong>Our hosting provider</strong>, which stores the website and its database on our behalf.</li>
+        ${sharedWith.length ? `<li><strong>${sharedWith.join(", ")}</strong>, as described above.</li>` : ""}
+        <li><strong>Authorities</strong>, only when the law requires it.</li>
       </ul>
-      <p>To use these rights, contact us using the details below. We will reply as soon as we can.</p>
 
-      <h2>Children</h2>
-      <p>This website is meant for businesses and adults. We do not knowingly collect information from children under ${minAge}.</p>
+      <h2>8. Information stored outside your country</h2>
+      <p>Our hosting provider${sharedWith.length ? " and Google" : ""} may store or process information on servers outside your country, including outside Ethiopia. When that happens, we choose providers that protect information with recognised safeguards.</p>
 
-      <h2>Changes to this policy</h2>
+      <h2>9. How we protect it</h2>
+      <p>Messages are stored in our own database, which only authorised ${company} staff can access through a password-protected admin area. ${https ? "The website uses an encrypted (HTTPS) connection, and staff" : "Staff"} passwords are stored only as secure one-way hashes. No system is perfectly secure, so please do not send highly sensitive information through the contact form.</p>
+
+      <h2>10. Your rights</h2>
+      <p>You can ask us to:</p>
+      <ul>
+        <li><strong>See</strong> the information we hold about you, and get a copy of it.</li>
+        <li><strong>Correct</strong> information that is wrong or incomplete.</li>
+        <li><strong>Delete</strong> your message and contact details.</li>
+        <li><strong>Stop or limit</strong> how we use your information, or object to it.</li>
+        ${on.analytics || on.ads || newsletter ? "<li><strong>Withdraw your consent</strong> at any time" + (on.analytics || on.ads ? " (for cookies: clear this site’s data and choose <em>Essential only</em>)" : "") + (newsletter ? (on.analytics || on.ads ? ", or unsubscribe from our news" : " by unsubscribing from our news") : "") + ".</li>" : ""}
+      </ul>
+      <p>To use these rights, contact us using the details in section 13. We may ask you to confirm who you are, and we will reply within 30 days. You can also complain to the data protection authority in your country. In Ethiopia, this is the authority responsible under the Personal Data Protection Proclamation No. 1321/2024.</p>
+
+      <h2>11. Children</h2>
+      <p>This website is meant for businesses and adults. We do not knowingly collect information from children under ${minAge}. If you believe a child has sent us information, contact us and we will delete it.</p>
+
+      <h2>12. Changes to this policy</h2>
       <p>If we change how we handle information, we will update this page and the date at the top.</p>
 
       ${extra ? `<h2>Additional information</h2>${extra}` : ""}
 
-      <h2>Contact us about privacy</h2>
+      <h2>13. Contact us about privacy</h2>
       ${contact.length ? `<p>${contact.join("<br>")}</p>` : '<p>Please use the <a href="/#contact">contact form</a>.</p>'}
     </article>
 

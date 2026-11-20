@@ -247,6 +247,37 @@ a.price-btn {
   color: var(--accent-light);
 }
 
+.legal-card h3 {
+  margin: 20px 0 8px;
+  font-size: 1rem;
+}
+
+/* "In short" box at the top of the privacy policy */
+.legal-summary {
+  margin-top: 28px;
+  padding: 20px 24px;
+  border: 1px solid var(--border-green);
+  border-radius: 18px;
+  background: rgba(24, 201, 100, 0.06);
+}
+
+.legal-summary h2 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
+.legal-summary ul {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 6px;
+}
+
+.legal-summary li {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .legal-card p + p,
 .legal-card p + ul,
 .legal-card ul + p,
