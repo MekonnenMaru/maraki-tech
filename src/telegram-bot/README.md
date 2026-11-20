@@ -13,6 +13,12 @@ Sends a Telegram message to the website team for every new contact-form message
 
 Use the switch on that page to turn alerts on or off.
 
+## Changing the bot
+
+The bot's username is **not stored** anywhere — it's read from Telegram with the token every time the
+page opens. To use another bot, paste its token and save; the page and the connect link switch to the
+new bot. (Changing the token disconnects everyone, so connect again.)
+
 ## How it's safe
 
 - The token is stored only in the database (table `telegram_bot`), never in the code or in git.

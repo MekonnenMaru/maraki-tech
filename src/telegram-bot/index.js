@@ -17,13 +17,16 @@ const { newCode, checkForCode } = require("./connect");
 
 const companyOf = (settings) => String(settings.company_name || "").trim() || "your website";
 
-/* ---------- Bot details (cached per token) ---------- */
+/* ---------- Bot details ---------- */
+// The bot's username is never stored: it's read from Telegram with the token.
+// Opening the dashboard page asks Telegram again (fresh = true), so a renamed bot or a new
+// token shows up straight away. The connect link reuses the last answer.
 
 let botCache = { token: "", bot: null };
 
-async function botInfo(token) {
+async function botInfo(token, { fresh = false } = {}) {
   if (!token) return null;
-  if (botCache.token === token && botCache.bot) return botCache.bot;
+  if (!fresh && botCache.token === token && botCache.bot) return botCache.bot;
   const me = await api.getMe(token);
   botCache = { token, bot: { username: me.username, name: me.first_name } };
   return botCache.bot;
@@ -100,7 +103,7 @@ async function status() {
   let bot = null;
   let botError = "";
   try {
-    bot = await botInfo(config.token);
+    bot = await botInfo(config.token, { fresh: true });
   } catch (error) {
     botError = error.message;
   }
